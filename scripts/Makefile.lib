@@ -326,6 +326,9 @@ DTC_FLAGS += $(call dtc-option,-Wno-interrupt_provider)
 # Overlay support
 DTC_FLAGS += -@
 
+# Silence warnings
+DTC_FLAGS += -q
+
 # Disable noisy checks by default
 ifeq ($(findstring 1,$(KBUILD_EXTRA_WARN)),)
 DTC_FLAGS += $(call dtc-option,-Wno-unit_address_vs_reg) \
