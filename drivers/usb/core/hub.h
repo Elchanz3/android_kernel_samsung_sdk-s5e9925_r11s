@@ -139,12 +139,9 @@ static inline int hub_is_superspeed(struct usb_device *hdev)
 
 static inline int hub_is_superspeedplus(struct usb_device *hdev)
 {
-	if (hdev->bos)
-		return (hdev->descriptor.bDeviceProtocol == USB_HUB_PR_SS &&
-			le16_to_cpu(hdev->descriptor.bcdUSB) >= 0x0310 &&
-			hdev->bos->ssp_cap);
-	else
-		return false;
+	return (hdev->descriptor.bDeviceProtocol == USB_HUB_PR_SS &&
+		le16_to_cpu(hdev->descriptor.bcdUSB) >= 0x0310 &&
+		hdev->bos && hdev->bos->ssp_cap);
 }
 
 static inline unsigned hub_power_on_good_delay(struct usb_hub *hub)
