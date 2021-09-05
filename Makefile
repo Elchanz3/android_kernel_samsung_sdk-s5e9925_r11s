@@ -449,14 +449,14 @@ KBUILD_HOSTLDLIBS   := $(HOST_LFS_LIBS) $(HOSTLDLIBS)
 # Make variables (CC, etc...)
 CPP		= $(CC) -E
 ifneq ($(LLVM),)
-CC		= clang
+CC		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/clang
 LD		= ld.lld
-AR		= llvm-ar
-NM		= llvm-nm
-OBJCOPY		= llvm-objcopy
-OBJDUMP		= llvm-objdump
-READELF		= llvm-readelf
-STRIP		= llvm-strip
+AR		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-ar
+NM		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-nm
+OBJCOPY		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-objcopy
+OBJDUMP		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-objdump
+READELF		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-readelf
+STRIP		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-strip
 else
 CC		= $(CROSS_COMPILE)gcc
 LD		= $(CROSS_COMPILE)ld
@@ -808,7 +808,6 @@ stackp-flags-$(CONFIG_STACKPROTECTOR_STRONG)      := -fstack-protector-strong
 
 KBUILD_CFLAGS += $(stackp-flags-y)
 
-KBUILD_CFLAGS-$(CONFIG_WERROR) += -Werror
 KBUILD_CFLAGS += $(KBUILD_CFLAGS-y)
 
 ifdef CONFIG_CC_IS_CLANG

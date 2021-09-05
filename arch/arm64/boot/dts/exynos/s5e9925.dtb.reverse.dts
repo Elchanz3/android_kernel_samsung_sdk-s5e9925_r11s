@@ -5208,7 +5208,7 @@
 		flags = <0x1e>;
 		g3d_cmu_cal_id = <0xb04000d>;
 		min_freq = <0x49f98>;
-		max_freq = <0x156490>;
+		max_freq = <0x13ed90>;
 		samsung,imgloader-s2mpu-support;
 		dma-coherent;
 		power-domains = <0x9a>;
@@ -6553,7 +6553,7 @@
 			dm-type = <0x00>;
 			dss-type = <0x00>;
 			max-freq = <0x1bd500>;
-			min-freq = <0xbb800>;
+			min-freq = <0x61a80>;
 			pm_qos-booting = <0x1a5e00>;
 			fast-switch;
 			thread-run-on = "0-5";
@@ -6574,7 +6574,7 @@
 			dm-type = <0x01>;
 			dss-type = <0x01>;
 			max-freq = <0x266038>;
-			min-freq = "\0\r/";
+			min-freq = <0x8ca00>;
 			fast-switch;
 			thread-run-on = "0-5";
 			#cooling-cells = <0x02>;
@@ -6594,7 +6594,7 @@
 			dm-type = <0x02>;
 			dss-type = <0x02>;
 			max-freq = <0x2ac538>;
-			min-freq = <0xea600>;
+			min-freq = <0x8ca00>;
 			fast-switch;
 			thread-run-on = "0-5";
 			pm_qos-booting = <0x27d738>;

@@ -7,14 +7,11 @@ DIR=`readlink -f .`
 OUT_DIR=$DIR/out
 PARENT_DIR=`readlink -f ${DIR}/..`
 
-export CROSS_COMPILE=$PARENT_DIR/vortex-clang/bin/aarch64-linux-gnu-
+export CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
 export CC=$PARENT_DIR/vortex-clang/bin/clang
 
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
-export PATH=$PARENT_DIR/vortex-clang/bin:$PATH
-export PATH=$PARENT_DIR/build-tools/path/linux-x86:$PATH
-export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
 export LLVM=1 LLVM_IAS=1
 export ARCH=arm64
@@ -96,8 +93,8 @@ build_kernel(){
   variant
   echo "${GREEN}***** Compiling kernel *****${STD}"
   [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
-  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz_${VARIANT}_defconfig
-  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV
+  make -j$(nproc) -C $(pwd) CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- CC=/home/chanz22/Documentos/GitHub/vortex-clang/bin/clang chanz_${VARIANT}_defconfig
+  make -j$(nproc) -C $(pwd) CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- CC=/home/chanz22/Documentos/GitHub/vortex-clang/bin/clang LLVM=/home/chanz22/Documentos/GitHub/vortex-clang/bin/
 
   [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
   if [ -e $DIR/arch/arm64/boot/Image ]; then
