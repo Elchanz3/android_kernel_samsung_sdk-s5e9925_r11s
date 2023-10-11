@@ -515,7 +515,13 @@ void do_undefinstr(struct pt_regs *regs)
 	if (!aarch32_break_handler(regs))
 		return;
 
-	if (call_undef_hook(regs) == 0)
+	if (user_insn_read(regs, &insn))
+		goto out_err;
+
+	if (try_emulate_mrs(regs, insn))
+		return;
+
+	if (call_undef_hook(regs, insn) == 0)
 		return;
 
 	trace_android_rvh_do_undefinstr(regs, user_mode(regs));
