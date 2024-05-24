@@ -74,10 +74,6 @@
 #include <asm/io.h>
 #include <asm/unistd.h>
 
-#ifdef CONFIG_SECURITY_DEFEX
-#include <linux/defex.h>
-#endif
-
 #include "uid16.h"
 
 #include <trace/hooks/sys.h>
@@ -846,11 +842,6 @@ long __sys_setfsuid(uid_t uid)
 	if (!uid_valid(kuid))
 		return old_fsuid;
 
-#ifdef CONFIG_SECURITY_DEFEX
-	if (task_defex_enforce(current, NULL, -__NR_setfsuid))
-		return old_fsuid;
-#endif
-
 	new = prepare_creds();
 	if (!new)
 		return old_fsuid;
@@ -1285,6 +1276,28 @@ static int override_release(char __user *release, size_t len)
 	return ret;
 }
 
+static int override_version(struct new_utsname __user *name)
+{
+#ifdef CONFIG_F2FS_REPORT_FAKE_KERNEL_VERSION
+	int ret;
+
+	if (strcmp(current->comm, "fsck.f2fs"))
+		return 0;
+
+	ret = copy_to_user(name->release, CONFIG_F2FS_FAKE_KERNEL_RELEASE,
+			   strlen(CONFIG_F2FS_FAKE_KERNEL_RELEASE) + 1);
+	if (ret)
+		return ret;
+
+	ret = copy_to_user(name->version, CONFIG_F2FS_FAKE_KERNEL_VERSION,
+			   strlen(CONFIG_F2FS_FAKE_KERNEL_VERSION) + 1);
+
+	return ret;
+#else
+	return 0;
+#endif
+}
+
 SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 {
 	struct new_utsname tmp;
@@ -1298,6 +1311,8 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 	if (override_release(name->release, sizeof(name->release)))
 		return -EFAULT;
 	if (override_architecture(name))
+		return -EFAULT;
+	if (override_version(name))
 		return -EFAULT;
 	return 0;
 }
