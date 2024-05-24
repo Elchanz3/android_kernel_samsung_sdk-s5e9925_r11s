@@ -223,7 +223,6 @@ obj-y += vibrator/common/inputff/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += battery/core/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += muic/common/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += kq/mesh/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
-obj-y += kperfmon/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += usb/typec/manager/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += fingerprint/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
 obj-y += gpu/drm/samsung/panel/s6e3fc5/ # ADDED BY LEGO AUTOMATICALLY: DO NOT SUBMIT
