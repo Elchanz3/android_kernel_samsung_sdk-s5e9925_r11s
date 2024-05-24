@@ -18,7 +18,7 @@ export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
 export LLVM=1 LLVM_IAS=1
 export ARCH=arm64
-KERNEL_MAKE_ENV="LOCALVERSION=-afaneh92"
+KERNEL_MAKE_ENV="LOCALVERSION=-chanz22"
 
 # Color
 ON_BLUE=`echo -e "\033[44m"`	# On Blue
@@ -59,7 +59,7 @@ build_tools(){
 
 variant(){
   findconfig=""
-  findconfig=($(ls arch/arm64/configs/afaneh_* 2>/dev/null))
+  findconfig=($(ls arch/arm64/configs/chanz-* 2>/dev/null))
   declare -i i=1
   shift 2
   echo ""
@@ -93,9 +93,9 @@ clean(){
 
 build_kernel(){
   variant
-  echo "${BGREEN}***** Compiling kernel *****${STD}"
+  echo "${GREEN}***** Compiling kernel *****${STD}"
   [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
-  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV afaneh_${VARIANT}_defconfig
+  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz-${VARIANT}_defconfig
   make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV
 
   [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
@@ -119,7 +119,7 @@ anykernel3(){
     cd $PARENT_DIR/AnyKernel3
     git reset --hard
     cp $DIR/arch/arm64/boot/Image zImage
-    sed -i "s/ExampleKernel by osm0sis/${VARIANT} kernel by afaneh92/g" anykernel.sh
+    sed -i "s/ExampleKernel by osm0sis/${VARIANT} kernel by Chanz22" anykernel.sh
     sed -i "s/=maguro/=${VARIANT}/g" anykernel.sh
     sed -i "s/=toroplus/=/g" anykernel.sh
     sed -i "s/=toro/=/g" anykernel.sh
