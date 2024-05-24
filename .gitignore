@@ -1,0 +1,6 @@
+
+*.tmp
+*.cmd
+*.dtout
+*.d
+/.thinlto-cache
