@@ -14,7 +14,6 @@
 
 // vvvvv DO NOT CHANGE THESE LINES! vvvvv
 struct dsms_policy_entry dsms_policy[] = {
-{ "security/samsung/defex_lsm/core/defex_main.c", "defex_report_violation" },
 }; // dsms_policy
 // ^^^^^ DO NOT CHANGE THESE LINES! ^^^^^
 
