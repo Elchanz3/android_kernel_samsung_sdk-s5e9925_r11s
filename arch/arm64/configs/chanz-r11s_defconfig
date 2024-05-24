@@ -7299,12 +7299,6 @@ CONFIG_MUIC_USE_MODULE_PARAM=y
 CONFIG_SEC_KQ_MESH=m
 
 #
-# samsung Performace manager
-#
-# CONFIG_KPERFMON is not set
-# end of samsung Performace manager
-
-#
 # USB TypeC Manager configs
 #
 CONFIG_USB_TYPEC_MANAGER_NOTIFIER=m
