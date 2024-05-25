@@ -59,7 +59,7 @@ build_tools(){
 
 variant(){
   findconfig=""
-  findconfig=($(ls arch/arm64/configs/chanz-* 2>/dev/null))
+  findconfig=($(ls arch/arm64/configs/chanz_r11s_defconfig* 2>/dev/null))
   declare -i i=1
   shift 2
   echo ""
@@ -95,7 +95,7 @@ build_kernel(){
   variant
   echo "${GREEN}***** Compiling kernel *****${STD}"
   [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
-  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz-${VARIANT}_defconfig
+  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz_${VARIANT}_defconfig
   make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV
 
   [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
