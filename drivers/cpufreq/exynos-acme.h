@@ -72,6 +72,8 @@ struct exynos_cpufreq_domain {
 	struct freq_qos_request		user_max_qos_req;
 	struct delayed_work		work;
 
+        unsigned int			user_default_qos;
+
 	/* fops node */
 	struct exynos_cpufreq_file_operations	min_qos_fops;
 	struct exynos_cpufreq_file_operations	max_qos_fops;
@@ -95,8 +97,6 @@ struct exynos_cpufreq_domain {
 	/* per-domain sysfs support */
 	struct kobject			kobj;
 
-	/* fake boot freq flag */
-	bool				valid_freq_flag;
 };
 
 /*
