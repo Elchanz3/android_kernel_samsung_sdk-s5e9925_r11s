@@ -6552,15 +6552,15 @@
 			cal-id = <0xb040002>;
 			dm-type = <0x00>;
 			dss-type = <0x00>;
-			max-freq = <0x1bd500>;
-			min-freq = <0x61a80>;
-			pm_qos-booting = <0x1a5e00>;
+			max-freq = <2106000>;
+			min-freq = <351000>;
+			pm_qos-booting = <2106000>;
 			fast-switch;
 			thread-run-on = "0-5";
 			#cooling-cells = <0x02>;
 			ect-coeff-index = <0x02>;
 			tz-cooling-name = "LITTLE";
-			freq-table = <0x61a80 0x8ca00 0xa4100 0xbb800 0xd2f00 0xea600 0x101d00 0x119400 0x130b00 0x148200 0x15f900 0x177000 0x18e700 0x1a5e00 0x1bd500>;
+			freq-table = <351000 400000 576000 672000 768000 864000 960000 1056000 1152000 1248000 1344000 1440000 1536000 1632000 1728000 1824000 2106000>;
 			phandle = <0x11e>;
 
 			dm-constraints {
@@ -6573,14 +6573,14 @@
 			cal-id = <0xb040003>;
 			dm-type = <0x01>;
 			dss-type = <0x01>;
-			max-freq = <0x266038>;
-			min-freq = <0x8ca00>;
+			max-freq = <2800000>;
+			min-freq = <377000>;
 			fast-switch;
 			thread-run-on = "0-5";
 			#cooling-cells = <0x02>;
 			ect-coeff-index = <0x01>;
 			tz-cooling-name = "MID";
-			freq-table = <0x8ca00 0xa4100 0xbb800 0xd2f00 0xea600 0x101d00 0x119400 0x130b00 0x148200 0x15f900 0x177000 0x18e700 0x1a5e00 0x1bd500 0x1d4c00 0x1ec300 0x203a00 0x21b100 0x232800 0x249f00 0x266038>;
+			freq-table = <377000 400000 576000 672000 768000 864000 960000 1056000 1152000 1248000 1344000 1440000 1536000 1632000 1728000 1824000 1920000 2016000 2112000 2208000 2304000 2400000 2515000 2691000 2730000 2800000>;
 			phandle = <0x119>;
 
 			dm-constraints {
@@ -6593,15 +6593,15 @@
 			cal-id = <0xb040004>;
 			dm-type = <0x02>;
 			dss-type = <0x02>;
-			max-freq = <0x2ac538>;
-			min-freq = <0x8ca00>;
+			max-freq = <3016000>;
+			min-freq = <350000>;
 			fast-switch;
 			thread-run-on = "0-5";
-			pm_qos-booting = <0x27d738>;
+			pm_qos-booting = <2969000>;
 			#cooling-cells = <0x02>;
 			ect-coeff-index = <0x00>;
 			tz-cooling-name = "BIG";
-			freq-table = <0x8ca00 0xa4100 0xbb800 0xd2f00 0xea600 0x101d00 0x119400 0x130b00 0x148200 0x15f900 0x177000 0x18e700 0x1a5e00 0x1bd500 0x1d4c00 0x1ec300 0x203a00 0x21b100 0x232800 0x249f00 0x266038 0x27d738 0x294e38 0x2ac538>;
+			freq-table = <350000 400000 576000 672000 768000 864000 960000 1056000 1152000 1248000 1344000 1440000 1536000 1632000 1728000 1824000 1920000 2016000 2112000 2208000 2304000 2400000 2515000 2611000 2707000 2803000 2902000 2969000 3016000>;
 			phandle = <0x118>;
 
 			dm-constraints {
