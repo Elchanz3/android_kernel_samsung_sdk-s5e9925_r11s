@@ -102,6 +102,10 @@ build_kernel(){
   if [ -e $DIR/arch/arm64/boot/Image ]; then
     cp $DIR/arch/arm64/boot/Image $OUT_DIR/Image
 
+    DTB_DIR=$(pwd)/arch/arm64/boot/dts
+    $(pwd)/tools/mkdtimg cfg_create $(pwd)/out/dtb.img dt.configs/s5e9925.cfg -d ${DTB_DIR}/exynos
+    $(pwd)/tools/mkdtimg cfg_create $(pwd)/out/dtbo.img dt.configs/${VARIANT}.cfg -d ${DTB_DIR}/samsung/${VARIANT}
+
     echo "${BGREEN}***** Ready to Roar *****${STD}"
     pause 'continue'
   else
@@ -124,7 +128,7 @@ anykernel3(){
     sed -i "s/=toroplus/=/g" anykernel.sh
     sed -i "s/=toro/=/g" anykernel.sh
     sed -i "s/=tuna/=/g" anykernel.sh
-    sed -i "s/platform\/omap\/omap_hsmmc\.0\/by-name\/boot/bootdevice\/by-name\/boot/g" anykernel.sh
+    sed -i "s/platform\/omap\/omap_hsmmc\.0\/by-name\/boot/g" anykernel.sh
     sed -i "s/backup_file/#backup_file/g" anykernel.sh
     sed -i "s/replace_string/#replace_string/g" anykernel.sh
     sed -i "s/insert_line/#insert_line/g" anykernel.sh
