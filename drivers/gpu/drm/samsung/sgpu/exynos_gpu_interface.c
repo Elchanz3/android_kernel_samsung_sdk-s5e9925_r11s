@@ -31,6 +31,8 @@
 #include <trace/hooks/mm.h>
 #include <linux/ems.h>
 
+#define TARGET_MAX_FREQ 1400000 // 1400MHz
+
 static struct dev_pm_qos_request	exynos_pm_qos_min;
 static struct dev_pm_qos_request	exynos_pm_qos_max;
 
@@ -1201,7 +1203,9 @@ int exynos_interface_init(struct devfreq *df)
 			       df->scaling_min_freq / HZ_PER_KHZ);
 	dev_pm_qos_add_request(df->dev.parent, &exynos_pm_qos_max,
 			       DEV_PM_QOS_MAX_FREQUENCY,
-			       df->scaling_max_freq / HZ_PER_KHZ);
+			       if (df->scaling_max_freq < TARGET_MAX_FREQ) {
+    df->scaling_max_freq = TARGET_MAX_FREQ;
+}
 	exynos_pm_qos_add_notifier(PM_QOS_GPU_THROUGHPUT_MAX,
 				   &gpu_max_qos_notifier);
 	exynos_pm_qos_add_notifier(PM_QOS_GPU_THROUGHPUT_MIN,
@@ -1424,13 +1428,12 @@ EXPORT_SYMBOL(gpu_dvfs_get_max_locked_freq);
 int gpu_dvfs_set_max_freq(unsigned long freq)
 {
 	struct devfreq *df = p_adev->devfreq;
-	int ret = 0;
 
 	if (!dev_pm_qos_request_active(&df->user_max_freq_req))
 		return -EAGAIN;
 
 	if (freq == 0)
-		freq = PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE;
+		freq = 1400000;
 
 	SGPU_LOG(p_adev, DMSG_INFO, DMSG_DVFS,
 		 "MAX_REQUEST amigo_pm_qos=%lu", freq);
@@ -1439,7 +1442,7 @@ int gpu_dvfs_set_max_freq(unsigned long freq)
 	dev_pm_qos_update_request(&exynos_pm_qos_max, freq);
 #endif /*CONFIG_EXYNOS_PM_QOS*/
 
-	return ret;
+	return 0;
 }
 EXPORT_SYMBOL(gpu_dvfs_set_max_freq);
 
