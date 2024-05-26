@@ -97,6 +97,9 @@ struct exynos_cpufreq_domain {
 	/* per-domain sysfs support */
 	struct kobject			kobj;
 
+        	/* fake boot freq flag */
+	bool				valid_freq_flag;
+
 };
 
 /*
