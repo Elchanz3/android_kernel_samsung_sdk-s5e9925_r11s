@@ -26,6 +26,8 @@
 #include "exynos_gpu_interface.h"
 #include "sgpu_profiler_v1.h"
 
+#include "sgpu_devfreq.h"
+
 #endif /* CONFIG_DRM_SGPU_EXYNOS */
 
 static int sgpu_devfreq_target(struct device *dev, unsigned long *target_freq, u32 flags)
@@ -208,11 +210,12 @@ int sgpu_devfreq_init(struct amdgpu_device *adev)
 	dp->get_cur_freq = sgpu_devfreq_cur_freq;
 	dp->exit = sgpu_devfreq_exit;
 	dp->timer = DEVFREQ_TIMER_DELAYED;
-        dp->max_freq = 1400000;
 
 	ret = sgpu_governor_init(adev->dev, dp, &data);
 	if (ret)
 		goto err_gov;
+
+	data->max_freq = 1400000; // define max freq in governor
 
 	adev->devfreq = devfreq_add_device(adev->dev, dp, "sgpu_governor", data);
 	if (IS_ERR(adev->devfreq)) {

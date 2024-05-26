@@ -1203,9 +1203,7 @@ int exynos_interface_init(struct devfreq *df)
 			       df->scaling_min_freq / HZ_PER_KHZ);
 	dev_pm_qos_add_request(df->dev.parent, &exynos_pm_qos_max,
 			       DEV_PM_QOS_MAX_FREQUENCY,
-			       if (df->scaling_max_freq < TARGET_MAX_FREQ) {
-    df->scaling_max_freq = TARGET_MAX_FREQ;
-}
+			          df->scaling_max_freq / HZ_PER_KHZ);
 	exynos_pm_qos_add_notifier(PM_QOS_GPU_THROUGHPUT_MAX,
 				   &gpu_max_qos_notifier);
 	exynos_pm_qos_add_notifier(PM_QOS_GPU_THROUGHPUT_MIN,

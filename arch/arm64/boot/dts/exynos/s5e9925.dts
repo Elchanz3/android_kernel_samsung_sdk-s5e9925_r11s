@@ -6553,7 +6553,7 @@
 			dm-type = <0x00>;
 			dss-type = <0x00>;
 			max-freq = <2106000>;
-			min-freq = <351000>;
+			min-freq = <672000>;
 			pm_qos-booting = <2106000>;
 			fast-switch;
 			thread-run-on = "0-5";
@@ -6574,7 +6574,7 @@
 			dm-type = <0x01>;
 			dss-type = <0x01>;
 			max-freq = <2800000>;
-			min-freq = <377000>;
+			min-freq = <864000>;
 			fast-switch;
 			thread-run-on = "0-5";
 			#cooling-cells = <0x02>;
@@ -6594,7 +6594,7 @@
 			dm-type = <0x02>;
 			dss-type = <0x02>;
 			max-freq = <3016000>;
-			min-freq = <350000>;
+			min-freq = <960000>;
 			fast-switch;
 			thread-run-on = "0-5";
 			pm_qos-booting = <2969000>;
