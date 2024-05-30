@@ -1068,9 +1068,6 @@ static int __bio_iov_append_get_pages(struct bio *bio, struct iov_iter *iter)
 	size_t offset;
 	int ret = 0;
 
-	if (WARN_ON_ONCE(!max_append_sectors))
-		return 0;
-
 	/*
 	 * Move page array up in the allocated memory for the bio vecs as far as
 	 * possible so that we can start filling biovecs from the beginning
@@ -1188,25 +1185,6 @@ int submit_bio_wait(struct bio *bio)
 	return blk_status_to_errno(bio->bi_status);
 }
 EXPORT_SYMBOL(submit_bio_wait);
-
-static void submit_bio_nowait_endio(struct bio *bio)
-{
-	bio_put(bio);
-}
-
-/**
- * submit_bio_nowait - submit a bio for fire-and-forget
- * @bio: The &struct bio which describes the I/O
- *
- * Simple wrapper around submit_bio() that takes care of bio_put() on completion
- */
-void submit_bio_nowait(struct bio *bio)
-{
-	bio->bi_end_io = submit_bio_nowait_endio;
-	bio->bi_opf |= REQ_SYNC;
-	submit_bio(bio);
-}
-EXPORT_SYMBOL(submit_bio_nowait);
 
 /**
  * bio_advance - increment/complete a bio by some number of bytes

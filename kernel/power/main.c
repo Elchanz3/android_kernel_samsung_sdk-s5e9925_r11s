@@ -23,7 +23,7 @@
 
 void lock_system_sleep(void)
 {
-	current->flags |= PF_FREEZER_SKIP;
+	freezer_do_not_count();
 	mutex_lock(&system_transition_mutex);
 }
 EXPORT_SYMBOL_GPL(lock_system_sleep);
@@ -111,9 +111,6 @@ static ssize_t pm_async_store(struct kobject *kobj, struct kobj_attribute *attr,
 			      const char *buf, size_t n)
 {
 	unsigned long val;
-
-	if (IS_ENABLED(CONFIG_ANDROID))
-		return n;
 
 	if (kstrtoul(buf, 10, &val))
 		return -EINVAL;

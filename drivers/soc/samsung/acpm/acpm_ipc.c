@@ -33,7 +33,7 @@
 static struct acpm_ipc_info *acpm_ipc;
 static struct workqueue_struct *update_log_wq;
 static struct acpm_debug_info *acpm_debug;
-static bool is_acpm_stop_log = true;
+static bool is_acpm_stop_log = false;
 static bool is_acpm_ramdump = false;
 static bool acpm_stop_log_req = false;
 struct acpm_framework *acpm_initdata;
@@ -813,13 +813,14 @@ EXPORT_SYMBOL_GPL(acpm_ipc_send_data);
 bool is_acpm_ipc_busy(unsigned ch_id)
 {
 	struct acpm_ipc_ch *channel;
-	unsigned int tx_front, rx_front;
+	unsigned int tx_front, tx_rear, rx_front;
 
 	channel = &acpm_ipc->channel[ch_id];
 	tx_front = __raw_readl(channel->tx_ch.front);
+	tx_rear = __raw_readl(channel->tx_ch.rear);
 	rx_front = __raw_readl(channel->rx_ch.front);
 
-	return (tx_front != rx_front);
+	return !(tx_front == tx_rear && tx_front == rx_front);
 }
 EXPORT_SYMBOL_GPL(is_acpm_ipc_busy);
 
