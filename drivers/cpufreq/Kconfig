@@ -101,6 +101,21 @@ config CPU_FREQ_DEFAULT_GOV_CONSERVATIVE
 	  Be aware that not all cpufreq drivers support the conservative
 	  governor. If unsure have a look at the help section of the
 	  driver. Fallback governor will be the performance governor.
+	  
+config CPU_FREQ_DEFAULT_GOV_EXYNOS_NOW
+	bool "exynos-now"
+	depends on !(X86_INTEL_PSTATE && SMP)
+	select CPU_FREQ_GOV_ONDEMAND
+	select CPU_FREQ_GOV_PERFORMANCE
+	help
+	  This cpufreq governor is specifically designed for Exynos-based
+	  processors, providing efficient frequency scaling tailored to the
+	  characteristics of Exynos architecture.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called cpufreq_exynos_now.
+
+	  If in doubt, say N.
 
 config CPU_FREQ_DEFAULT_GOV_SCHEDUTIL
 	bool "schedutil"
@@ -210,6 +225,19 @@ config CPU_FREQ_GOV_CONSERVATIVE
 	  module will be called cpufreq_conservative.
 
 	  For details, take a look at linux/Documentation/cpu-freq.
+
+	  If in doubt, say N.
+	  
+config CPU_FREQ_GOV_EXYNOS_NOW
+	tristate "'exynos-now' cpufreq governor"
+	select CPU_FREQ_GOV_COMMON
+	help
+	  This cpufreq governor is specifically designed for Exynos-based
+	  processors, providing efficient frequency scaling tailored to the
+	  characteristics of Exynos architecture.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called cpufreq_exynos_now.
 
 	  If in doubt, say N.
 
