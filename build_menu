@@ -18,8 +18,8 @@ export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
 export LLVM=1 LLVM_IAS=1
 export ARCH=arm64
-export ZIP_VERSION=v0.1
-KERNEL_MAKE_ENV="LOCALVERSION=HarmoniX-v0.1"
+export ZIP_VERSION=v0.2
+KERNEL_MAKE_ENV="LOCALVERSION=-HarmoniX-v0.2"
 
 # Color
 ON_BLUE=`echo -e "\033[44m"`	# On Blue
@@ -35,7 +35,7 @@ pause(){
 }
 
 clang(){
-  if [ ! -d $PARENT_DIR/clang-r416183b ]; then
+  if [ ! -d $PARENT_DIR/clang-r416183b1 ]; then
     pause 'clone Android Clang/LLVM Prebuilts'
     git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b1 $PARENT_DIR/clang-r416183b1
     . $DIR/build_menu
