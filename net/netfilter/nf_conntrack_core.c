@@ -1482,13 +1482,6 @@ static void gc_worker(struct work_struct *work)
 		gc_work->early_drop = false;
 		gc_work->next_bucket = 0;
 	}
-	// SEC_PRODUCT_FEATURE_KNOX_SUPPORT_NPA {
-	if ( (check_ncm_flag()) && (check_intermediate_flag()) ) {
-		next_run = 0;
-	}
-	// SEC_PRODUCT_FEATURE_KNOX_SUPPORT_NPA }
-
-	queue_delayed_work(system_power_efficient_wq, &gc_work->dwork, next_run);
 }
 
 static void conntrack_gc_work_init(struct conntrack_gc_work *gc_work)
