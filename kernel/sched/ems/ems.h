@@ -280,7 +280,6 @@ extern unsigned int fclamp_apply(struct cpufreq_policy *policy, unsigned int ori
 extern int fclamp_init(void);
 
 /* esg */
-extern int esgov_pre_init(struct kobject *ems_kobj);
 extern int get_gov_next_cap(struct tp_env *env, struct cpumask *cpus, int dst_cpu, bool apply_clamp);
 
 /* ego */

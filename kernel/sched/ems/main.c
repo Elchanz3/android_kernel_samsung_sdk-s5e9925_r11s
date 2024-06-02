@@ -706,7 +706,6 @@ static int ems_probe(struct platform_device *pdev)
 	profile_sched_init(ems_kobj);
 	ontime_init(ems_kobj);
 	fclamp_init();
-	esgov_pre_init(ems_kobj);
 	ego_pre_init(ems_kobj);
 	freqboost_init();
 	frt_init(ems_kobj);
