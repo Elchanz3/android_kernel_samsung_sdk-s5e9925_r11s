@@ -117,7 +117,7 @@ build_kernel(){
 anykernel3(){
   if [ -e $DIR/arch/arm64/boot/Image ]; then
     cd $PARENT_DIR/AnyKernel3
-    cp $DIR/arch/arm64/boot/Image zImage
+    cp $DIR/arch/arm64/boot/Image $PARENT_DIR/AnyKernel3
     cp ../android_kernel_samsung_sdk-s5e9925_r11s/out/dtbo.img dtbo
     cp ../android_kernel_samsung_sdk-s5e9925_r11s/out/dtb.img dtb
     zip -r9 $PARENT_DIR/HarmoniX_Kernel_${VARIANT}_${ZIP_VERSION}_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
