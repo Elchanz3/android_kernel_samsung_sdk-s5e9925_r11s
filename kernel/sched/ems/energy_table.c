@@ -1237,54 +1237,53 @@ void et_init_table(struct cpufreq_policy *policy)
 	if (unlikely(!dev))
 		return;
 
-	/* Count valid frequency */
-	cpufreq_for_each_entry(cursor, policy->freq_table) {
-		if ((cursor->frequency > policy->cpuinfo.max_freq) ||
-		    (cursor->frequency < policy->cpuinfo.min_freq))
-			continue;
-
-		table_size++;
-	}
-
-	/* There is no valid frequency in the table, cancels building energy table */
-	if (!table_size)
-		return;
-
-	table->nr_states = table_size;
-	table->states = kcalloc(table_size,
-			sizeof(struct energy_state), GFP_KERNEL);
-	if (!table->states)
-		return;
-
-	/* Fill the energy table with frequency, dynamic/static power and voltage */
-	i = 0;
-	cpufreq_for_each_entry(cursor, policy->freq_table) {
-		struct dev_pm_opp *opp;
-		unsigned long f_hz, f_mhz, v;
-
-		if ((cursor->frequency > policy->cpuinfo.max_freq) ||
-		    (cursor->frequency < policy->cpuinfo.min_freq))
-			continue;
-
-		f_mhz = cursor->frequency / 1000;		/* KHz -> MHz */
-		f_hz = cursor->frequency * 1000;		/* KHz -> Hz */
-
-		/* Get voltage from opp */
-		opp = dev_pm_opp_find_freq_ceil(dev, &f_hz);
-		v = dev_pm_opp_get_voltage(opp) / 1000;		/* uV -> mV */
-
-		table->states[i].frequency = cursor->frequency;
-		table->states[i].dynamic_power = et_dynamic_power(table, f_mhz, v);
-		table->states[i].static_power = et_static_power(table, v, DEFAULT_TEMP);
-		table->states[i].voltage = v;
-		i++;
-	}
-
-	if (table->power_sharing_dsu)
-		et_init_dsu_table(table, dev);
-
-	et_update_capacity();
+/* Count valid frequency */
+cpufreq_for_each_entry(cursor, policy->freq_table) {
+    table_size++;
 }
+
+/* There is no valid frequency in the table, cancels building energy table */
+if (!table_size)
+    return;
+
+table->nr_states = table_size;
+table->states = kcalloc(table_size, sizeof(struct energy_state), GFP_KERNEL);
+if (!table->states)
+    return;
+
+/* undervolt cpu by 50mV */
+static unsigned long reduce_voltage(unsigned long voltage) {
+    return voltage - 50;
+}
+
+/* Fill the energy table with frequency, dynamic/static power and voltage */
+i = 0;
+cpufreq_for_each_entry(cursor, policy->freq_table) {
+    struct dev_pm_opp *opp;
+    unsigned long f_hz, f_mhz, v;
+
+    f_mhz = cursor->frequency / 1000;        /* KHz -> MHz */
+    f_hz = cursor->frequency * 1000;        /* KHz -> Hz */
+
+    /* Get voltage from opp */
+    opp = dev_pm_opp_find_freq_ceil(dev, &f_hz);
+    v = dev_pm_opp_get_voltage(opp) / 1000;        /* uV -> mV */
+
+    // undervolt generated voltages
+    v = reduce_voltage(v);
+
+    table->states[i].frequency = cursor->frequency;
+    table->states[i].dynamic_power = et_dynamic_power(table, f_mhz, v);
+    table->states[i].static_power = et_static_power(table, v, DEFAULT_TEMP);
+    table->states[i].voltage = v;
+    i++;
+}
+
+if (table->power_sharing_dsu)
+    et_init_dsu_table(table, dev);
+
+et_update_capacity();
+
 
 static void et_init_dsu_data(void)
 {
