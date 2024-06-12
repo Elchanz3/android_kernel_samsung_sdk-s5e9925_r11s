@@ -59,7 +59,7 @@ build_tools(){
 
 variant(){
   findconfig=""
-  findconfig=($(ls arch/arm64/configs/chanz-* 2>/dev/null))
+  findconfig=($(ls arch/arm64/configs/chanz-r11s_defconfig* 2>/dev/null))
   declare -i i=1
   shift 2
   echo ""
@@ -95,7 +95,7 @@ build_kernel(){
   variant
   echo "${GREEN}***** Compiling kernel *****${STD}"
   [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
-  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz-${VARIANT}_defconfig
+  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz-r11s_defconfig
   make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV
 
   [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
@@ -104,7 +104,7 @@ build_kernel(){
 
     DTB_DIR=$(pwd)/arch/arm64/boot/dts
     $(pwd)/tools/mkdtimg cfg_create $(pwd)/out/dtb.img dt.configs/s5e9925.cfg -d ${DTB_DIR}/exynos
-    $(pwd)/tools/mkdtimg cfg_create $(pwd)/out/dtbo.img dt.configs/${VARIANT}.cfg -d ${DTB_DIR}/samsung/${VARIANT}
+    $(pwd)/tools/mkdtimg cfg_create $(pwd)/out/dtbo.img dt.configs/r11s.cfg -d ${DTB_DIR}/samsung/r11s
 
     echo "${BGREEN}***** Ready to Roar *****${STD}"
     pause 'continue'
@@ -116,27 +116,13 @@ build_kernel(){
 anykernel3(){
   if [ ! -d $PARENT_DIR/AnyKernel3 ]; then
     pause 'clone AnyKernel3 - Flashable Zip Template'
-    git clone https://github.com/osm0sis/AnyKernel3 $PARENT_DIR/AnyKernel3
   fi
   variant
   if [ -e $DIR/arch/arm64/boot/Image ]; then
     cd $PARENT_DIR/AnyKernel3
-    git reset --hard
-    cp $DIR/arch/arm64/boot/Image zImage
-    sed -i "s/ExampleKernel by osm0sis/${VARIANT} kernel by Chanz22" anykernel.sh
-    sed -i "s/=maguro/=${VARIANT}/g" anykernel.sh
-    sed -i "s/=toroplus/=/g" anykernel.sh
-    sed -i "s/=toro/=/g" anykernel.sh
-    sed -i "s/=tuna/=/g" anykernel.sh
-    sed -i "s/platform\/omap\/omap_hsmmc\.0\/by-name\/boot/g" anykernel.sh
-    sed -i "s/backup_file/#backup_file/g" anykernel.sh
-    sed -i "s/replace_string/#replace_string/g" anykernel.sh
-    sed -i "s/insert_line/#insert_line/g" anykernel.sh
-    sed -i "s/append_file/#append_file/g" anykernel.sh
-    sed -i "s/patch_fstab/#patch_fstab/g" anykernel.sh
-    sed -i "s/dump_boot/split_boot/g" anykernel.sh
-    sed -i "s/write_boot/flash_boot/g" anykernel.sh
-    zip -r9 $PARENT_DIR/${VARIANT}_kernel_`cat $DIR/include/config/kernel.release`_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
+    cp $DIR/arch/arm64/boot/Image Image
+    cp $DIR/out/dtbo.img dtbo
+    zip -r9 $PARENT_DIR/r11s_kernel_`cat $DIR/include/config/kernel.release`_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
     cd $DIR
     pause 'continue'
   else
