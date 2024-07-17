@@ -35,7 +35,7 @@ pause(){
 }
 
 clang(){
-  if [ ! -d $PARENT_DIR/clang-r416183b ]; then
+  if [ ! -d $PARENT_DIR/clang-r416183b1 ]; then
     pause 'clone Android Clang/LLVM Prebuilts'
     git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b1 $PARENT_DIR/clang-r416183b1
     . $DIR/build_menu
