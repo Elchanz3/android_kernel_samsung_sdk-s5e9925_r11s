@@ -1220,32 +1220,36 @@ static void esgov_stop(struct cpufreq_policy *policy)
 
 static void esgov_limits(struct cpufreq_policy *policy)
 {
-    struct esgov_policy *esg_policy = policy->governor_data;
-    unsigned long max = capacity_cpu_orig(policy->cpu);
-    unsigned int target_util, target_freq = 0;
+	struct esgov_policy *esg_policy = policy->governor_data;
+	unsigned long max = capacity_cpu_orig(policy->cpu);
+	unsigned int target_util, target_freq = 0;
 
-    slack_update_min(policy);
-    esg_update_freq_range(policy);
+	/* These don't need to get work_lock */
+	slack_update_min(policy);
+	esg_update_freq_range(policy);
 
-    if (!policy->fast_switch_enabled) {
-        if (!mutex_trylock(&esg_policy->work_lock))
-            return;
+	if (!policy->fast_switch_enabled) {
+		mutex_lock(&esg_policy->work_lock);
+		cpufreq_policy_apply_limits(policy);
 
-        cpufreq_policy_apply_limits(policy);
+		/* Get target util of the cluster of this cpu */
+		target_util = esgov_get_target_util(esg_policy, 0, max);
 
-        target_util = esgov_get_target_util(esg_policy, 0, max);
-        target_freq = get_next_freq(esg_policy, target_util, max);
+		/* get target freq for new target util */
+		target_freq = get_next_freq(esg_policy, target_util, max);
 
-        if (policy->cur != target_freq) {
-            __cpufreq_driver_target(policy, target_freq, CPUFREQ_RELATION_L);
-        }
+		/*
+		 * After freq limits change, CPUFreq policy->cur can be different
+		 * with ESG's target freq. In that case, explicitly change current freq
+		 * to ESG's target freq
+		 */
+		if (policy->cur != target_freq)
+			__cpufreq_driver_target(policy, target_freq, CPUFREQ_RELATION_L);
 
-        mutex_unlock(&esg_policy->work_lock);
-    } else {
-        esg_policy->limits_changed = true;
-    }
+		mutex_unlock(&esg_policy->work_lock);
+	} else
+		esg_policy->limits_changed = true;
 }
-
 
 struct cpufreq_governor energy_step_gov = {
 	.name			= "energy_step",
@@ -1306,7 +1310,7 @@ static int esgov_register(void)
 #define DEFAULT_ESG_STEP	(4)
 #define DEFAULT_PATIENT_MODE	(0)
 #define DEFAULT_PELT_MARGIN	(25)
-#define DEFAULT_PELT_BOOST	(20)
+#define DEFAULT_PELT_BOOST	(0)
 
 int esgov_pre_init(struct kobject *ems_kobj)
 {
