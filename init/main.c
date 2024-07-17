@@ -113,6 +113,11 @@
 #include <kunit/test.h>
 #endif
 
+#ifdef CONFIG_SECURITY_DEFEX
+#include <linux/defex.h>
+void __init __weak defex_load_rules(void) { }
+#endif
+
 #ifdef CONFIG_RKP
 #include <linux/rkp.h>
 #endif
@@ -1591,4 +1596,7 @@ static noinline void __init kernel_init_freeable(void)
 	 */
 
 	integrity_load_keys();
+#ifdef CONFIG_SECURITY_DEFEX
+	defex_load_rules();
+#endif
 }
