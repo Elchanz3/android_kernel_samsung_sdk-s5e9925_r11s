@@ -12,7 +12,7 @@ export CC=$PARENT_DIR/clang-r416183b1/bin/clang
 
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
-export PATH=$PARENT_DIR/clang-r416183b1/bin:$PATH
+export PATH=$PARENT_DIR/vortex-clang/bin:$PATH
 export PATH=$PARENT_DIR/build-tools/path/linux-x86:$PATH
 export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
@@ -35,9 +35,9 @@ pause(){
 }
 
 clang(){
-  if [ ! -d $PARENT_DIR/clang-r416183b1 ]; then
-    pause 'clone Android Clang/LLVM Prebuilts'
-    git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b1 $PARENT_DIR/clang-r416183b1
+  if [ ! -d $PARENT_DIR/vortex-clang ]; then
+    pause 'clone vortex-clang/LLVM Prebuilts'
+    git clone https://github.com/vijaymalav564/vortex-clang --depth=1 $PARENT_DIR/vortex-clang
     . $DIR/build_menu
   fi
 }
