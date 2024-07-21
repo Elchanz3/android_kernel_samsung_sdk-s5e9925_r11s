@@ -1459,29 +1459,7 @@ static ssize_t target_freq_show(struct device *dev,
 
 	return sprintf(buf, "%lu\n", df->previous_freq);
 }
-
-static ssize_t target_freq_store(struct device *dev,
-					  struct device_attribute *attr,
-					  const char *buf, size_t count)
-{
-	struct devfreq *devfreq = to_devfreq(dev);
-	unsigned int freq;
-	int ret;
-
-	if (!devfreq->governor)
-		return -EINVAL;
-
-	ret = sscanf(buf, "%u", &freq);
-	if (ret != 1)
-		return -EINVAL;
-
-	devfreq->previous_freq = freq;
-
-	ret = count;
-
-	return ret;
-}
-static DEVICE_ATTR_RW(target_freq);
+static DEVICE_ATTR_RO(target_freq);
 
 static ssize_t polling_interval_show(struct device *dev,
 				     struct device_attribute *attr, char *buf)
@@ -1543,38 +1521,72 @@ static ssize_t min_freq_store(struct device *dev, struct device_attribute *attr,
 	return count;
 }
 
-#define store_one(name)						\
-static ssize_t name##_store					\
-(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)	\
-{								\
-	struct devfreq *devfreq = to_devfreq(dev);	\
-	unsigned int freq;	\
-	int ret;	\
-	\
-	if (!devfreq->governor)	\
-		return -EINVAL;	\
-	\
-	ret = sscanf(buf, "%u", &freq);	\
-	if (ret != 1)	\
-		return -EINVAL;	\
-	\
-	devfreq->name = freq; \
-	\
-	mutex_lock(&devfreq->lock);	\
-	ret = update_devfreq(devfreq);	\
-	mutex_unlock(&devfreq->lock);	\
-	\
-	if (ret && ret != -EAGAIN)	\
-		return ret;	\
-	\
-	ret = count;	\
-	\
-	return ret;	\
-}
-store_one(min_freq);
-store_one(max_freq);
+static ssize_t min_freq_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct devfreq *df = to_devfreq(dev);
+	unsigned long min_freq, max_freq;
 
+	mutex_lock(&df->lock);
+	get_freq_range(df, &min_freq, &max_freq);
+	mutex_unlock(&df->lock);
+
+	return sprintf(buf, "%lu\n", min_freq);
+}
 static DEVICE_ATTR_RW(min_freq);
+
+static ssize_t max_freq_store(struct device *dev, struct device_attribute *attr,
+			      const char *buf, size_t count)
+{
+	struct devfreq *df = to_devfreq(dev);
+	unsigned long value;
+	int ret;
+
+	/*
+	 * Protect against theoretical sysfs writes between
+	 * device_add and dev_pm_qos_add_request
+	 */
+	if (!dev_pm_qos_request_active(&df->user_max_freq_req))
+		return -EINVAL;
+
+	ret = sscanf(buf, "%lu", &value);
+	if (ret != 1)
+		return -EINVAL;
+
+	/*
+	 * PM QoS frequencies are in kHz so we need to convert. Convert by
+	 * rounding upwards so that the acceptable interval never shrinks.
+	 *
+	 * For example if the user writes "666666666" to sysfs this value will
+	 * be converted to 666667 kHz and back to 666667000 Hz before an OPP
+	 * lookup, this ensures that an OPP of 666666666Hz is still accepted.
+	 *
+	 * A value of zero means "no limit".
+	 */
+	if (value)
+		value = DIV_ROUND_UP(value, HZ_PER_KHZ);
+	else
+		value = PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE;
+
+	ret = dev_pm_qos_update_request(&df->user_max_freq_req, value);
+	if (ret < 0)
+		return ret;
+
+	return count;
+}
+
+static ssize_t max_freq_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct devfreq *df = to_devfreq(dev);
+	unsigned long min_freq, max_freq;
+
+	mutex_lock(&df->lock);
+	get_freq_range(df, &min_freq, &max_freq);
+	mutex_unlock(&df->lock);
+
+	return sprintf(buf, "%lu\n", max_freq);
+}
 static DEVICE_ATTR_RW(max_freq);
 
 static ssize_t available_frequencies_show(struct device *d,
