@@ -64,6 +64,7 @@ struct exynos_cpufreq_domain {
 	unsigned int			boot_freq;
 	unsigned int			resume_freq;
 	unsigned int			old;
+	unsigned int			qos_max_freq;
 	unsigned int			user_default_qos;
 
 	/* freq qos */

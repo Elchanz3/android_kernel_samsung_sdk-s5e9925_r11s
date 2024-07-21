@@ -1993,11 +1993,6 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 	if (!of_property_read_u32(dn, "min-freq", &val))
 		// domain->min_freq = max(domain->min_freq, val);
 		domain->min_freq = val;
-	/* If this domain has boost freq, change max */
-	val = exynos_pstate_get_boost_freq(cpumask_first(&domain->cpus));
-	if (val > domain->max_freq)
-		domain->max_freq = val;
-	domain->qos_max_freq = domain->max_freq;
 
 	/* id==0 for little  id==1 for perf  id==2 for prime */
 	if (domain->id == 0) {
