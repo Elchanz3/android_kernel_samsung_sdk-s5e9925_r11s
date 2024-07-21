@@ -437,36 +437,25 @@ HOSTCXX	= g++
 endif
 
 KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
-			 -O2 -fomit-frame-pointer -std=gnu89
+			 -O3 -fomit-frame-pointer -std=gnu89
 KBUILD_USERCFLAGS  := $(KBUILD_USERHOSTCFLAGS) $(USERCFLAGS)
 KBUILD_USERLDFLAGS := $(USERLDFLAGS)
 
 KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) $(HOSTCFLAGS)
-KBUILD_HOSTCXXFLAGS := -Wall -O2 $(HOST_LFS_CFLAGS) $(HOSTCXXFLAGS)
+KBUILD_HOSTCXXFLAGS := -Wall -O3 $(HOST_LFS_CFLAGS) $(HOSTCXXFLAGS)
 KBUILD_HOSTLDFLAGS  := $(HOST_LFS_LDFLAGS) $(HOSTLDFLAGS)
 KBUILD_HOSTLDLIBS   := $(HOST_LFS_LIBS) $(HOSTLDLIBS)
 
 # Make variables (CC, etc...)
 CPP		= $(CC) -E
-ifneq ($(LLVM),)
-CC		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/clang
+CC		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/clang
 LD		= ld.lld
-AR		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-ar
-NM		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-nm
-OBJCOPY		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-objcopy
-OBJDUMP		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-objdump
-READELF		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-readelf
-STRIP		= /home/chanz22/Documentos/GitHub/vortex-clang/bin/llvm-strip
-else
-CC		= $(CROSS_COMPILE)gcc
-LD		= $(CROSS_COMPILE)ld
-AR		= $(CROSS_COMPILE)ar
-NM		= $(CROSS_COMPILE)nm
-OBJCOPY		= $(CROSS_COMPILE)objcopy
-OBJDUMP		= $(CROSS_COMPILE)objdump
-READELF		= $(CROSS_COMPILE)readelf
-STRIP		= $(CROSS_COMPILE)strip
-endif
+AR		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-ar
+NM		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-nm
+OBJCOPY		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-objcopy
+OBJDUMP		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-objdump
+READELF		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-readelf
+STRIP		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-strip
 PAHOLE		= pahole
 RESOLVE_BTFIDS	= $(objtree)/tools/bpf/resolve_btfids/resolve_btfids
 LEX		= flex
@@ -776,13 +765,7 @@ KBUILD_CFLAGS	+= $(call cc-disable-warning, format-truncation)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, format-overflow)
 KBUILD_CFLAGS	+= $(call cc-disable-warning, address-of-packed-member)
 
-ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
-KBUILD_CFLAGS += -O2
-else ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE_O3
 KBUILD_CFLAGS += -O3
-else ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
-KBUILD_CFLAGS += -Os
-endif
 
 # Tell gcc to never replace conditional load with a non-conditional one
 KBUILD_CFLAGS	+= $(call cc-option,--param=allow-store-data-races=0)

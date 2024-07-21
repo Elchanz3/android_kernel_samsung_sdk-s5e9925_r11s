@@ -8,7 +8,7 @@ OUT_DIR=$DIR/out
 PARENT_DIR=`readlink -f ${DIR}/..`
 
 export CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
-export CC=$PARENT_DIR/vortex-clang/bin/clang
+export CC=$PARENT_DIR/clang-r416183b1/clang
 
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
@@ -29,14 +29,6 @@ STD=`echo -e "\033[0m"`		# Text Clear
 # Functions
 pause(){
   read -p "${BRED}$2${STD}Press ${BBLUE}[Enter]${STD} key to $1..." fackEnterKey
-}
-
-clang(){
-  if [ ! -d $PARENT_DIR/vortex-clang ]; then
-    pause 'clone vortex-clang/LLVM Prebuilts'
-    git clone https://github.com/vijaymalav564/vortex-clang --depth=1 $PARENT_DIR/vortex-clang
-    . $DIR/build_menu
-  fi
 }
 
 gas(){
@@ -93,8 +85,8 @@ build_kernel(){
   variant
   echo "${GREEN}***** Compiling kernel *****${STD}"
   [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
-  make -j$(nproc) -C $(pwd) CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- CC=/home/chanz22/Documentos/GitHub/vortex-clang/bin/clang chanz_${VARIANT}_defconfig
-  make -j$(nproc) -C $(pwd) CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- CC=/home/chanz22/Documentos/GitHub/vortex-clang/bin/clang LLVM=/home/chanz22/Documentos/GitHub/vortex-clang/bin/
+  make -j$(nproc) -C $(pwd) CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- CC=/home/chanz22/Documentos/GitHub/clang-r416183b1/bin/clang chanz_${VARIANT}_defconfig
+  make -j$(nproc) -C $(pwd) CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- CC=/home/chanz22/Documentos/GitHub/clang-r416183b1/bin/clang LLVM=/home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-
 
   [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
   if [ -e $DIR/arch/arm64/boot/Image ]; then
