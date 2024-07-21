@@ -15,8 +15,6 @@
 
 #include <trace/events/ems.h>
 #include <trace/events/ems_debug.h>
-#include <linux/types.h>
-#include <stdlib.h>
 
 struct static_power_table {
 	unsigned long *power;
@@ -70,76 +68,86 @@ struct energy_table {
 static struct energy_table *dsu_table;
 
 static unsigned long et_dynamic_power(struct energy_table *table,
-                                      unsigned long freq, unsigned long volt)
+				unsigned long freq, unsigned long volt)
 {
-    unsigned long long p;
-    unsigned long c = table->dynamic_coeff;
+	unsigned long p, c = table->dynamic_coeff;
 
-    /* power = coefficient * frequency * voltage^2 */
-    p = (unsigned long long)c * freq * volt * volt;
+	/* power = coefficent * frequency * voltage^2 */
+	p = c * freq * volt * volt;
 
-    /*
-     * f_mhz is more than 3 digits and volt is also more than 3 digits,
-     * so calculated power is more than 9 digits. For convenience of
-     * calculation, divide the value by 10^9.
-     */
-    do_div(p, 1000000000);
+	/*
+	 * f_mhz is more than 3 digits and volt is also more than 3 digits,
+	 * so calculated power is more than 9 digits. For convenience of
+	 * calculation, divide the value by 10^9.
+	 */
+	do_div(p, 1000000000);
 
-    return (unsigned long)p;
+	return p;
 }
 
 /* list must be ascending order */
-static inline int et_find_nearest_index(int value, int *list, int length)
+static int et_find_nearest_index(int value, int *list, int length)
 {
-    if (length <= 0)
-        return -1;
+	int i;
 
-    if (value < list[0])
-        return 0;
+	/*
+	 * length is less than 0 or given value is smaller than first
+	 * element of list, pick index 0.
+	 */
+	if (length <= 0 || value < list[0])
+		return 0;
 
-    if (value > list[length - 1])
-        return length - 1;
+	for (i = 0; i < length; i++) {
+		if (value == list[i])
+			return i;
 
-    int low = 0, high = length - 1;
+		if (i == length - 1)
+			return i;
 
-    while (low <= high) {
-        int mid = low + (high - low) / 2;
+		if (list[i] < value && value < list[i + 1]) {
+			if (value - list[i] < list[i + 1] - value)
+				return i;
+			else
+				return i + 1;
+		}
+	}
 
-        if (list[mid] == value)
-            return mid;
-
-        if (list[mid] < value)
-            low = mid + 1;
-        else
-            high = mid - 1;
-    }
-
-    return (abs(list[low] - value) < abs(list[low - 1] - value)) ? low : low - 1;
+	return 0;
 }
 
 static unsigned long
-static unsigned long
 __et_static_power(struct static_power_table *spt,
-                  unsigned long volt, int temp)
+			unsigned long volt, int temp)
 {
-    int row = et_find_nearest_index(volt, spt->volt_field, spt->row_size);
-    int col = et_find_nearest_index(temp, spt->temp_field, spt->col_size);
+	int row, col;
 
-    return spt->power[row * spt->col_size + col];
+	row = et_find_nearest_index(volt, spt->volt_field, spt->row_size);
+	col = et_find_nearest_index(temp, spt->temp_field, spt->col_size);
+
+	/* get static power from pre-calculated table */
+	return spt->power[row * spt->col_size + col];
 }
 
 static unsigned long et_static_power(struct energy_table *table,
-                                     unsigned long volt, int temp)
+					unsigned long volt, int temp)
 {
-    if (!table->spt) {
+	/*
+	 * Pre-calculated static power table does not exist,
+	 * calculate static power with coefficient.
+	 */
+	if (!table->spt) {
+		unsigned long p;
 
-        return (table->static_coeff * volt * volt) / 1000000;
-    }
+		/* power = coefficent * voltage^2 / 10^6 */
+		p = table->static_coeff * volt * volt;
+		do_div(p, 1000000);
+		return p;
+	}
 
-    if (!temp && likely(table->spt->tz_dev))
-        temp = table->spt->tz_dev->temperature / 1000;
+	if (!temp && likely(table->spt->tz_dev))
+		temp = table->spt->tz_dev->temperature / 1000;
 
-    return __et_static_power(table->spt, volt, temp);
+	return __et_static_power(table->spt, volt, temp);
 }
 
 static int et_freq_index(struct energy_table *table, unsigned long freq)
