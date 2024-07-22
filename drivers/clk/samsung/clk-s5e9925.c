@@ -32,8 +32,8 @@ bool clk_exynos_skip_hw;
  */
 /* fixed rate clocks generated outside the soc */
 struct samsung_fixed_rate s5e9925_fixed_rate_ext_clks[] = {
-	FRATE(OSCCLK1, "fin_pll1", NULL, 0, 76800000),
-	FRATE(OSCCLK2, "fin_pll2", NULL, 0, 25600000),
+	FRATE(OSCCLK1, "fin_pll1", NULL, 0, 86800000),
+	FRATE(OSCCLK2, "fin_pll2", NULL, 0, 35600000),
 };
 
 struct init_vclk s5e9925_alive_hwacg_vclks[] = {
