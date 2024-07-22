@@ -23,53 +23,36 @@
 
 #include "sgpu_profiler_v1.h"
 
-struct freq_voltage *gpu_dvfs_get_freq_table(void);
-
-static struct freq_voltage freq_table[NUM_FREQ_STATES] = {
-    {605000, 800000}, // step 1
-    {711000, 850000}, // step 2
-    {807000, 900000}, // step 3
-    {903000, 950000}, // step 4
-    {999000, 1000000}, //  step 5
-    {1095000, 1050000}, // step 6
-    {1210000, 1100000}, // step 7
-    {1306000, 1150000}, // step 8
-    {1440000, 1200000}, // step 9
-};
 
 static ssize_t dvfs_table_show(struct device *dev,
-                               struct device_attribute *attr, char *buf)
+				      struct device_attribute *attr, char *buf)
 {
-    struct devfreq *df = to_devfreq(dev);
-    struct sgpu_governor_data *data = df->data;
-    int i;
-    ssize_t count;
-    struct freq_voltage *freq_table;
+	struct devfreq *df = to_devfreq(dev);
+	struct sgpu_governor_data *data = df->data;
+	int i;
+	ssize_t count;
 
-    freq_table = gpu_dvfs_get_freq_table();
+	count = scnprintf(buf, PAGE_SIZE,
+			  "      freq voltage min max down(ms)\n");
+	for (i = 0; i < df->profile->max_state; i++) {
+		struct dev_pm_opp *target_opp;
+		unsigned long freq = df->profile->freq_table[i];
+		unsigned long volt;
+		target_opp = devfreq_recommended_opp(dev->parent, &freq, 0);
+		if (freq != df->profile->freq_table[i] || IS_ERR(target_opp)) {
+			dev_pm_opp_put(target_opp);
+			continue;
+		}
+		volt = dev_pm_opp_get_voltage(target_opp);
+		dev_pm_opp_put(target_opp);
+		count += scnprintf(&buf[count], PAGE_SIZE - count,
+				   "%10lu %7lu %3u %3u %7u\n",
+				   freq, volt,
+				   data->min_thresholds[i], data->max_thresholds[i],
+				   data->downstay_times[i]);
+	}
 
-    count = scnprintf(buf, PAGE_SIZE,
-                      "      freq voltage min max down(ms)\n");
-    for (i = 0; i < df->profile->max_state; i++) {
-        unsigned long freq = freq_table[i].freq;
-        unsigned long volt = freq_table[i].volt;
-
-        struct dev_pm_opp *target_opp;
-        target_opp = devfreq_recommended_opp(dev->parent, &freq, 0);
-        if (freq != freq_table[i].freq || IS_ERR(target_opp)) {
-            dev_pm_opp_put(target_opp);
-            continue;
-        }
-        dev_pm_opp_put(target_opp);
-
-        count += scnprintf(&buf[count], PAGE_SIZE - count,
-                           "%10lu %7lu %3u %3u %7u\n",
-                           freq, volt,
-                           data->min_thresholds[i], data->max_thresholds[i],
-                           data->downstay_times[i]);
-    }
-
-    return count;
+	return count;
 }
 static DEVICE_ATTR_RO(dvfs_table);
 
@@ -265,48 +248,43 @@ static ssize_t valid_time_store(struct device *dev,
 static DEVICE_ATTR_RW(valid_time);
 
 static ssize_t max_freq_show(struct device *dev,
- 		        struct device_attribute *attr, char *buf)
+			     struct device_attribute *attr, char *buf)
 {
-    struct devfreq *df = to_devfreq(dev);
-    struct sgpu_governor_data *data = df->data;
-
-    extern struct freq_voltage freq_table[];
-    u32 max_freq = freq_table[0].freq;
-
-    return scnprintf(buf, PAGE_SIZE, "%u\n", max_freq);
+	struct devfreq *df = to_devfreq(dev);
+	struct sgpu_governor_data *data = df->data;
+	return scnprintf(buf, PAGE_SIZE, "%lu\n",
+			 data->sys_max_freq);
 }
-static DEVICE_ATTR_RW(max_freq);
 
 static ssize_t max_freq_store(struct device *dev,
-						struct device_attribute *attr,
-						const char *buf, size_t count)
+			      struct device_attribute *attr,
+			      const char *buf, size_t count)
 {
-    struct devfreq *df = to_devfreq(dev);
-    struct sgpu_governor_data *data = df->data;
-    unsigned long value;
-    int ret;
+	struct devfreq *df = to_devfreq(dev);
+	struct sgpu_governor_data *data = df->data;
+	struct amdgpu_device *adev = data->adev;
+	unsigned long value;
+	int ret;
 
-    ret = sscanf(buf, "%lu", &value);
-    if (ret != 1)
-        return -EINVAL;
+	ret = sscanf(buf, "%lu", &value);
+	if (ret != 1)
+		return -EINVAL;
 
-    if (value < SGPU_MIN_FREQ || value > SGPU_MAX_FREQ)
-        return -EINVAL;
+	if (!dev_pm_qos_request_active(&data->sys_pm_qos_max))
+		return -EINVAL;
 
-    if (!dev_pm_qos_request_active(&data->sys_pm_qos_max))
-        return -EINVAL;
+	SGPU_LOG(adev, DMSG_INFO, DMSG_DVFS,
+		 "MAX_REQUEST sys_pm_qos=%lu", value);
+	DRM_INFO("[sgpu] MAX_REQUEST sys_pm_qos=%lu", value);
 
-    SGPU_LOG(data->adev, DMSG_INFO, DMSG_DVFS,
-             "MAX_REQUEST sys_pm_qos=%lu", value);
-    DRM_INFO("[sgpu] MAX_REQUEST sys_pm_qos=%lu", value);
+	if (sgpu_dvfs_governor_major_level_check(df, value)) {
+		dev_pm_qos_update_request(&data->sys_pm_qos_max, value / HZ_PER_KHZ);
+		data->sys_max_freq = value;
+	} else
+		return -EINVAL;
 
-    if (sgpu_dvfs_governor_major_level_check(df, value)) {
-        dev_pm_qos_update_request(&data->sgpu_max_freq, value / HZ_PER_KHZ);
-        data->sys_max_freq = value;
-    } else
-        return -EINVAL;
-
-    return count;
+	ret = count;
+	return ret;
 }
 static DEVICE_ATTR_RW(max_freq);
 
@@ -315,13 +293,9 @@ static ssize_t min_freq_show(struct device *dev,
 {
 	struct devfreq *df = to_devfreq(dev);
 	struct sgpu_governor_data *data = df->data;
-
-	extern struct freq_voltage freq_table[];
-	u32 min_freq = freq_table[NUM_FREQ_STATES - 1].freq;
-
-	return scnprintf(buf, PAGE_SIZE, "%u\n", min_freq);
+	return scnprintf(buf, PAGE_SIZE, "%lu\n",
+			 data->sys_min_freq);
 }
-static DEVICE_ATTR_RW(min_freq);
 
 static ssize_t min_freq_store(struct device *dev,
 			      struct device_attribute *attr,

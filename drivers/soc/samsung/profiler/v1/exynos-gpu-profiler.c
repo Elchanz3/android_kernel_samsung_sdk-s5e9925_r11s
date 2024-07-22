@@ -25,42 +25,26 @@ u64 get_gpu_hw_status(void)
  ************************************************************************/
 u32 gpupro_get_table_cnt(s32 id)
 {
-    u32 freq_table[] = {605000, 711000, 807000, 903000, 999000, 1095000, 1210000, 1306000, 1440000};
-    int table_cnt = sizeof(freq_table) / sizeof(freq_table[0]);
-    return table_cnt;
+	return profiler.table_cnt;
 }
 
-u32 gpupro_get_freq_table(s32 id, struct freq_voltage *table)
+u32 gpupro_get_freq_table(s32 id, u32 *table)
 {
 	int idx;
-	struct freq_voltage freq_table[] = {
-		{605000, 850},
-		{711000, 900},
-		{807000, 950},
-		{903000, 1000},
-		{999000, 1050},
-		{1095000, 1100},
-		{1210000, 1150},
-		{1306000, 1200},
-		{1440000, 1250}
-	};
-	int table_cnt = sizeof(freq_table) / sizeof(freq_table[0]);
-
-	for (idx = 0; idx < table_cnt; idx++) {
-		table[idx].freq = freq_table[idx].freq;
-		table[idx].volt = freq_table[idx].volt;
-	}
+	for (idx = 0; idx < profiler.table_cnt; idx++)
+		table[idx] = profiler.table[idx].freq;
 
 	return idx;
 }
 
 u32 gpupro_get_max_freq(s32 id)
 {
-    return 1440000; // max_freq defined in table
+	return profiler.table[profiler.max_freq_idx].freq;
+}
 
 u32 gpupro_get_min_freq(s32 id)
 {
-    return 605000; // min_freq defined in table
+	return profiler.table[profiler.min_freq_idx].freq;
 }
 
 u32 gpupro_get_freq(s32 id)
@@ -160,8 +144,8 @@ struct private_fn_gpu gpu_pd_fn = {
 struct domain_fn gpu_fn = {
 	.get_table_cnt		= &gpupro_get_table_cnt,
 	.get_freq_table		= &gpupro_get_freq_table,
-	.get_max_freq		= 1440000
-	.get_min_freq		= 605000
+	.get_max_freq		= &gpupro_get_max_freq,
+	.get_min_freq		= &gpupro_get_min_freq,
 	.get_freq			= &gpupro_get_freq,
 	.get_power			= &gpupro_get_power,
 	.get_power_change	= &gpupro_get_power_change,
@@ -217,14 +201,14 @@ static u32 gpupro_update_profile(int user)
  ************************************************************************/
 static int register_export_fn(u32 *max_freq, u32 *min_freq, u32 *cur_freq)
 {
-    *max_freq = 1440000;
-    *min_freq = 605000;
-    *cur_freq = exynos_profiler_get_cur_clock();
+	*max_freq = exynos_profiler_get_max_locked_freq();
+	*min_freq = exynos_profiler_get_min_locked_freq();
+	*cur_freq = exynos_profiler_get_cur_clock();
 
-    profiler.table_cnt = 9; // number of elements on table
-    profiler.fc.time[CS_ACTIVE] = exynos_profiler_get_time_in_state();
+	profiler.table_cnt = exynos_profiler_get_step();
+	profiler.fc.time[CS_ACTIVE] = exynos_profiler_get_time_in_state();
 
-    return 0;
+	return 0;
 }
 
 static int parse_dt(struct device_node *dn)
