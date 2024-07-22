@@ -56,8 +56,8 @@ static unsigned int *mo_scen;
 static unsigned int *llc_ways;
 static unsigned int disable_llc_way;
 static unsigned long ski_gpu_min_clock;
-static unsigned long ski_gpu_max_clock = PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE;
-static unsigned long gpu_siop_max_clock = PM_QOS_MAX_FREQUENCY_DEFAULT_VALUE;
+static unsigned long ski_gpu_max_clock = 1440000
+static unsigned long gpu_siop_max_clock = 1440000
 
 static struct delayed_work work_mm_min_clock;
 
@@ -596,7 +596,7 @@ static ssize_t gpu_max_clock_store(struct kobject *kobj,
 	DRM_INFO("[sgpu] MAX_REQUEST ski_gpu_max=%lu", freq);
 	if (sgpu_dvfs_governor_major_level_check(p_adev->devfreq, freq)) {
 		exynos_pm_qos_update_request(&exynos_ski_gpu_max_qos, freq);
-		ski_gpu_max_clock = freq;
+		ski_gpu_max_clock = 1440000
 	} else
 		return -EINVAL;
 
@@ -628,7 +628,7 @@ static ssize_t gpu_siop_max_clock_store(struct kobject *kobj,
 		 "MAX_REQUEST gpu_siop_max=%lu", freq);
 	DRM_INFO("[sgpu] MAX_REQUEST gpu_siop_max=%lu", freq);
 	exynos_pm_qos_update_request(&exynos_gpu_siop_max_qos, freq);
-	gpu_siop_max_clock = freq;
+	gpu_siop_max_clock = 1440000
 
 	return count;
 }

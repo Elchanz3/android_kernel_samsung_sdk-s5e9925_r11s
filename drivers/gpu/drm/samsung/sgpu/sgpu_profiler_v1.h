@@ -19,11 +19,23 @@
 #include "amdgpu.h"
 #include "sgpu_governor.h"
 #include "exynos_gpu_interface.h"
+#include <linux/types.h>
 
-#define PROFILER_TABLE_MAX				200
+#define NUM_FREQ_STATES 9
+
+struct freq_voltage {
+    u32 freq;
+    u32 volt;
+};
+
+
+#define SGPU_MAX_FREQ 1440000 // max gpu freq
+#define SGPU_MINFREQ 605000 // min gpu freq
+
+#define PROFILER_TABLE_MAX				300
 #define RENDERTIME_MAX					999999ULL
-#define RENDERTIME_MIN					4000ULL
-#define RENDERTIME_DEFAULT_FRAMETIME	16666ULL
+#define RENDERTIME_MIN					5000ULL
+#define RENDERTIME_DEFAULT_FRAMETIME	17666ULL
 
 struct profiler_interframe_data {
 	unsigned int nrq;
