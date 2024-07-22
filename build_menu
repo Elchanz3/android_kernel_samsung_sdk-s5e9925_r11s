@@ -7,11 +7,14 @@ DIR=`readlink -f .`
 OUT_DIR=$DIR/out
 PARENT_DIR=`readlink -f ${DIR}/..`
 
-export CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
-export CC=$PARENT_DIR/clang-r416183b1/clang
+export CROSS_COMPILE=$PARENT_DIR/clang-r416183b1/bin/aarch64-linux-gnu-
+export CC=$PARENT_DIR/clang-r416183b1/bin/clang
 
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
+export PATH=$PARENT_DIR/clang-r416183b1/bin:$PATH
+export PATH=$PARENT_DIR/build-tools/path/linux-x86:$PATH
+export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
 export LLVM=1 LLVM_IAS=1
 export ARCH=arm64
@@ -25,10 +28,18 @@ BBLUE=`echo -e "\033[1;34m"`	# Bold Blue
 BGREEN=`echo -e "\033[1;32m"`	# Bold Green
 UNDER_LINE=`echo -e "\e[4m"`	# Text Under Line
 STD=`echo -e "\033[0m"`		# Text Clear
- 
+
 # Functions
 pause(){
   read -p "${BRED}$2${STD}Press ${BBLUE}[Enter]${STD} key to $1..." fackEnterKey
+}
+
+clang(){
+  if [ ! -d $PARENT_DIR/clang-r416183b1 ]; then
+    pause 'clone Android Clang/LLVM Prebuilts'
+    git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b1 $PARENT_DIR/clang-r416183b1
+    . $DIR/build_menu
+  fi
 }
 
 gas(){
@@ -85,8 +96,8 @@ build_kernel(){
   variant
   echo "${GREEN}***** Compiling kernel *****${STD}"
   [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
-  make -j$(nproc) -C $(pwd) CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- CC=/home/chanz22/Documentos/GitHub/clang-r416183b1/bin/clang chanz_${VARIANT}_defconfig
-  make -j$(nproc) -C $(pwd) CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- CC=/home/chanz22/Documentos/GitHub/clang-r416183b1/bin/clang LLVM=/home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-
+  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz_${VARIANT}_defconfig
+  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV
 
   [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
   if [ -e $DIR/arch/arm64/boot/Image ]; then
@@ -147,7 +158,7 @@ read_options(){
 
 # Trap CTRL+C, CTRL+Z and quit singles
 trap '' SIGINT SIGQUIT SIGTSTP
- 
+
 # Step # Main logic - infinite loop
 while true
 do
