@@ -4,3 +4,4 @@
 *.dtout
 *.d
 /.thinlto-cache
+*.lds
