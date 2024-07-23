@@ -428,13 +428,8 @@ HOST_LFS_CFLAGS := $(shell getconf LFS_CFLAGS 2>/dev/null)
 HOST_LFS_LDFLAGS := $(shell getconf LFS_LDFLAGS 2>/dev/null)
 HOST_LFS_LIBS := $(shell getconf LFS_LIBS 2>/dev/null)
 
-ifneq ($(LLVM),)
 HOSTCC	= clang
 HOSTCXX	= clang++
-else
-HOSTCC	= gcc
-HOSTCXX	= g++
-endif
 
 KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
 			 -O3 -fomit-frame-pointer -std=gnu89
@@ -448,14 +443,14 @@ KBUILD_HOSTLDLIBS   := $(HOST_LFS_LIBS) $(HOSTLDLIBS)
 
 # Make variables (CC, etc...)
 CPP		= $(CC) -E
-CC		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/clang
-LD		= ld.lld
-AR		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-ar
-NM		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-nm
-OBJCOPY		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-objcopy
-OBJDUMP		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-objdump
-READELF		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-readelf
-STRIP		= /home/chanz22/Documentos/GitHub/clang-r416183b1/bin/llvm-strip
+CC		= $(CLANG_DIR)
+LD		= $(LLD)/ld.lld
+AR		= $(LLVM_DIR)/llvm-ar
+NM		= $(LLVM_DIR)/llvm-nm
+OBJCOPY		= $(LLVM_DIR)/llvm-objcopy
+OBJDUMP		= $(LLVM_DIR)/llvm-objdump
+READELF		= $(LLVM_DIR)/llvm-readelf
+STRIP		= $(LLVM_DIR)/llvm-strip
 PAHOLE		= pahole
 RESOLVE_BTFIDS	= $(objtree)/tools/bpf/resolve_btfids/resolve_btfids
 LEX		= flex
