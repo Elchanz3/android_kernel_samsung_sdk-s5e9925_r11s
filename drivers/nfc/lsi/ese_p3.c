@@ -39,6 +39,8 @@
 #include <linux/poll.h>
 #include <linux/regulator/consumer.h>
 #include <linux/ioctl.h>
+#include <linux/pinctrl/consumer.h>
+
 #ifdef CONFIG_OF
 #include <linux/of_gpio.h>
 #endif

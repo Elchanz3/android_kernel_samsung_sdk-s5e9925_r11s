@@ -1334,115 +1334,6 @@ init_fail:
 	return 0;
 }
 
-/*Underclocking little cores to 351 MHz*/
-unsigned long arg_cpu_min_c1 = 351000;
-
-static int __init cpufreq_read_cpu_min_c1(char *cpu_min_c1) /*integer remains in memory after function call*/
-{
-	unsigned long ui_khz;
-	int ret;
-
-	ret = kstrtoul(cpu_min_c1, 0, &ui_khz); /*convert cpu_min_c1 string to unsigned long variable ui_khz*/
-	if (ret)
-		return -EINVAL;
-
-	arg_cpu_min_c1 = ui_khz;
-	printk("cpu_min_c1=%lu\n", arg_cpu_min_c1);
-	return ret;
-}
-__setup("cpu_min_c1=", cpufreq_read_cpu_min_c1);
-
-/*Underclocking perf cores to 377 MHz*/
-unsigned long arg_cpu_min_c2 = 377000;
-
-static __init int cpufreq_read_cpu_min_c2(char *cpu_min_c2)
-{
-	unsigned long ui_khz;
-	int ret;
-
-	ret = kstrtoul(cpu_min_c2, 0, &ui_khz);
-	if (ret)
-		return -EINVAL;
-
-	arg_cpu_min_c2 = ui_khz;
-	printk("cpu_min_c2=%lu\n", arg_cpu_min_c2);
-	return ret;
-}
-__setup("cpu_min_c2=", cpufreq_read_cpu_min_c2);
-
-/*Underclocking prime cores to 350 MHz*/
-unsigned long arg_cpu_min_c3 = 350000;
-
-static __init int cpufreq_read_cpu_min_c3(char *cpu_min_c3)
-{
-	unsigned long ui_khz;
-	int ret;
-
-	ret = kstrtoul(cpu_min_c3, 0, &ui_khz);
-	if (ret)
-		return -EINVAL;
-
-	arg_cpu_min_c3 = ui_khz;
-	printk("cpu_min_c3=%lu\n", arg_cpu_min_c3);
-	return ret;
-}
-__setup("cpu_min_c3=", cpufreq_read_cpu_min_c3);
-
-
-/*Overclocking little cores to 2106 MHz*/
-unsigned long arg_cpu_max_c1 = 2106000; /*max_cpu_freq=??MHz for little cores*/
-
-static int __init cpufreq_read_cpu_max_c1(char *cpu_max_c1) /*integer remains in memory after function call*/
-{
-	unsigned long ui_khz;
-	int ret;
-
-	ret = kstrtoul(cpu_max_c1, 0, &ui_khz); /*convert cpu_max_c1 string to unsigned long variable ui_khz*/
-	if (ret)
-		return -EINVAL;
-
-	arg_cpu_max_c1 = ui_khz;
-	printk("cpu_max_c1=%lu\n", arg_cpu_max_c1);
-	return ret;
-}
-__setup("cpu_max_c1=", cpufreq_read_cpu_max_c1);
-
-/*Overclocking perf cores to 2804 MHz*/
-unsigned long arg_cpu_max_c2 = 2804000; /*max_cpu_freq=?? MHz*/
-
-static __init int cpufreq_read_cpu_max_c2(char *cpu_max_c2)
-{
-	unsigned long ui_khz;
-	int ret;
-
-	ret = kstrtoul(cpu_max_c2, 0, &ui_khz);
-	if (ret)
-		return -EINVAL;
-
-	arg_cpu_max_c2 = ui_khz;
-	printk("cpu_max_c2=%lu\n", arg_cpu_max_c2);
-	return ret;
-}
-__setup("cpu_max_c2=", cpufreq_read_cpu_max_c2);
-
-/*Overclocking prime cores to 3166 MHz*/
-unsigned long arg_cpu_max_c3 = 3166000; /*max_cpu_freq=?? MHz*/
-
-static __init int cpufreq_read_cpu_max_c3(char *cpu_max_c3)
-{
-	unsigned long ui_khz;
-	int ret;
-
-	ret = kstrtoul(cpu_max_c3, 0, &ui_khz);
-	if (ret)
-		return -EINVAL;
-
-	arg_cpu_max_c3 = ui_khz;
-	printk("cpu_max_c3=%lu\n", arg_cpu_max_c3);
-	return ret;
-}
-__setup("cpu_max_c3=", cpufreq_read_cpu_max_c3);
-
 #if IS_ENABLED(CONFIG_SEC_BOOTSTAT)
 void sec_bootstat_get_cpuinfo(int *freq, int *online)
 {
@@ -1882,11 +1773,9 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 	domain->min_freq = cal_dfs_get_min_freq(domain->cal_id);
 
 	if (!of_property_read_u32(dn, "max-freq", &val))
-		domain->max_freq = val;
-		// domain->max_freq = min(domain->max_freq, val);
+		domain->max_freq = min(domain->max_freq, val);
 	if (!of_property_read_u32(dn, "min-freq", &val))
-		// domain->min_freq = max(domain->min_freq, val);
-		domain->min_freq = val;
+		domain->min_freq = max(domain->min_freq, val);
 
 	/* Get freq-table from device tree and cut the out of range */
 	raw_table_size = of_property_count_u32_elems(dn, "freq-table");
@@ -1896,7 +1785,24 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 		return -ENODATA;
 	}
 
+	/*
+	 * If the ECT's min/max frequency are asynchronous with the dts',
+	 * adjust the freq table with the ECT's min/max frequency.
+	 * It only supports the situations when the ECT's min is higher than the dts'
+	 * or the ECT's max is lower than the dts'.
+	 */
+	adjust_freq_table_with_min_max_freq(freq_table, raw_table_size, domain);
+
+	domain->table_size = 0;
+	for (index = 0; index < raw_table_size; index++) {
+		if (freq_table[index] > domain->max_freq ||
+		    freq_table[index] < domain->min_freq) {
+			freq_table[index] = CPUFREQ_ENTRY_INVALID;
+			continue;
+		}
+
 		domain->table_size++;
+	}
 
 	/*
 	 * Get volt table from CAL with given freq-table
@@ -1960,11 +1866,6 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 	/*
 	 * Initialize other items.
 	 */
-
-	/* Default QoS for user */
-	// if (!of_property_read_u32(dn, "user-default-qos", &val))
-	//	domain->user_default_qos = val;
-
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
 	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);
 	domain->old = get_freq(domain);
@@ -1978,33 +1879,6 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 	domain->old = domain->freq_table[cur_idx].frequency;
 
 	mutex_init(&domain->lock);
-	/* Initialize frequency scaling */
-	domain->max_freq = cal_dfs_get_max_freq(domain->cal_id);
-	domain->min_freq = cal_dfs_get_min_freq(domain->cal_id);
-	/*
-	 * If max-freq property exists in device tree, max frequency is
-	 * selected to smaller one between the value defined in device
-	 * tree and CAL. In case of min-freq, min frequency is selected
-	 * to bigger one.
-	 */
-	if (!of_property_read_u32(dn, "max-freq", &val))
-		domain->max_freq = val;
-		// domain->max_freq = min(domain->max_freq, val);
-	if (!of_property_read_u32(dn, "min-freq", &val))
-		// domain->min_freq = max(domain->min_freq, val);
-		domain->min_freq = val;
-
-	/* id==0 for little  id==1 for perf  id==2 for prime */
-	if (domain->id == 0) {
-		domain->max_freq = arg_cpu_max_c1;
-		domain->min_freq = arg_cpu_min_c1;
-	} else if (domain->id == 1) {
-		domain->max_freq = arg_cpu_max_c2;
-		domain->min_freq = arg_cpu_min_c2;
-	} else if (domain->id == 2) {
-		domain->max_freq = arg_cpu_max_c3;
-		domain->min_freq = arg_cpu_min_c3;
-	}
 
 	/*
 	 * Initialize CPUFreq DVFS Manager

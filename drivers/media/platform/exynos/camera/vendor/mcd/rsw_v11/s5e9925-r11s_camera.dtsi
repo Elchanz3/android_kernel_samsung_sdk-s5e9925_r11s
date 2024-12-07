@@ -1380,8 +1380,8 @@
 			triple_capture_cpu = CPU_CL0;
 
 			front_single_photo_int_cam = <6>;
-			front_single_photo_cam = <6>;
-			front_single_photo_csis = <6>;
+			front_single_photo_cam = <5>;
+			front_single_photo_csis = <5>;
 			front_single_photo_isp = <6>;
 			front_single_photo_mif = <6>;
 			front_single_photo_int = <5>;
@@ -1396,8 +1396,8 @@
 			front_single_photo_full_cpu = CPU_CL0;
 
 			front_single_video_fhd30_int_cam = <6>;
-			front_single_video_fhd30_cam = <7>;
-			front_single_video_fhd30_csis = <6>;
+			front_single_video_fhd30_cam = <5>;
+			front_single_video_fhd30_csis = <5>;
 			front_single_video_fhd30_isp = <7>;
 			front_single_video_fhd30_mif = <8>;
 			front_single_video_fhd30_int = <5>;

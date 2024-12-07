@@ -31,21 +31,10 @@
 #define LINE_TO_SGMT(sgmt_len, ptr)	((ptr) & ((sgmt_len) - 1))
 static struct workqueue_struct *wq;
 static struct work_struct work_report;
-static struct workqueue_struct *wq_p;
-static struct work_struct work_profile;
 
-#define FW_PROFILE_BUF_SIZE	(1024*1024)
-struct fw_profile_info {
-	u8 data[FW_PROFILE_BUF_SIZE];
-	size_t info_cnt;
-	size_t buf_size;
-};
-
-static struct fw_profile_info fwProfile;
 /* Modify strArr, when changes are there in cmd_done structure */
 static const u8 strArr[][128] = {{"fid : "}, {"duration : "}, };
 static void __rprt_manager(struct work_struct *w);
-static void __profile_manager(struct work_struct *w);
 int npu_kpi_response_read(void);
 extern struct npu_proto_drv *protodr;
 
@@ -494,11 +483,6 @@ int npu_interface_probe(struct device *dev, void *regs1, void *regs2)
 	mutex_init(&interface.lock);
 	wq = alloc_workqueue("my work", WQ_FREEZABLE|WQ_HIGHPRI, 1);
 	INIT_WORK(&work_report, __rprt_manager);
-
-	wq_p = alloc_workqueue("my work profile", WQ_FREEZABLE | WQ_HIGHPRI, 1);
-	INIT_WORK(&work_profile, __profile_manager);
-
-	memset(&fwProfile, 0, sizeof(struct fw_profile_info));
 
 	probe_info("complete in %s\n", __func__);
 	return ret;
@@ -970,32 +954,6 @@ fr_req_err:
 	return ret;
 }
 
-void makeStructToString(struct cmd_done *done)
-{
-	u32 val;
-	u8 tempbuf[128];
-	u32 i;
-
-	memset(&fwProfile, 0, sizeof(struct fw_profile_info));
-	fwProfile.info_cnt = sizeof(struct cmd_done) / sizeof(u32);
-	if (done == NULL) {
-		npu_err("done is NULL\n");
-		goto error;
-	}
-	for (i = 0; i < (int)fwProfile.info_cnt; i++) {
-		memset(tempbuf, 0, sizeof(tempbuf));
-		val = ((u32 *)done)[i];
-		sprintf(tempbuf, "%d", val);
-
-		memcpy(fwProfile.data + fwProfile.buf_size, strArr[i], strlen(strArr[i]));
-		strcat(fwProfile.data, tempbuf);
-		strcat(fwProfile.data, "\n");
-		fwProfile.buf_size += strlen(strArr[i]) + strlen(tempbuf) + 1;
-	}
-error:
-	return;
-}
-
 int nw_rslt_manager(int *ret_msgid, struct npu_nw *nw)
 {
 	int ret, channel;
@@ -1030,7 +988,6 @@ int nw_rslt_manager(int *ret_msgid, struct npu_nw *nw)
 			 cmd.c.done.request_specific_value);
 		nw->result_value = cmd.c.done.request_specific_value;
 		nw->result_code = NPU_ERR_NO_ERROR;
-		makeStructToString(&(cmd.c.done));
 	} else if (msg.command == COMMAND_NDONE) {
 		npu_err("COMMAND_NDONE for mid: (%d) error(%u/0x%08x)\n"
 			, msg.mid, cmd.c.ndone.error, cmd.c.ndone.error);
@@ -1041,7 +998,6 @@ int nw_rslt_manager(int *ret_msgid, struct npu_nw *nw)
 	}
 
 	fw_rprt_manager();
-	// fw_profile_manager();
 	*ret_msgid = msg.mid;
 
 	return TRUE;
@@ -1086,7 +1042,6 @@ int fr_rslt_manager(int *ret_msgid, struct npu_frame *frame, enum channel_flag c
 			frame->duration	= cmd.c.done.request_specific_value;
 
 		frame->result_code = NPU_ERR_NO_ERROR;
-		makeStructToString(&(cmd.c.done));
 	} else if (msg.command == COMMAND_NDONE) {
 		npu_err("COMMAND_NDONE for mid: (%d) error(%u/0x%08x)\n"
 			, msg.mid, cmd.c.ndone.error, cmd.c.ndone.error);
@@ -1107,7 +1062,6 @@ int fr_rslt_manager(int *ret_msgid, struct npu_frame *frame, enum channel_flag c
 	}
 	*ret_msgid = msg.mid;
 	fw_rprt_manager();
-	// fw_profile_manager();
 	return TRUE;
 }
 
@@ -1264,24 +1218,11 @@ static void __rprt_manager(struct work_struct *w)
 	fw_rprt_gather();
 }
 
-static void __profile_manager(struct work_struct *w)
-{
-	npu_fw_profile_store(fwProfile.data, fwProfile.buf_size);
-}
-
 void fw_rprt_manager(void)
 {
 	if (wq)
 		queue_work(wq, &work_report);
 	else//not opened, or already closed.
-		return;
-}
-
-void fw_profile_manager(void)
-{
-	if (wq_p)
-		queue_work(wq_p, &work_profile);
-	else
 		return;
 }
 

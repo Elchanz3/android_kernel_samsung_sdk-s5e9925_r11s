@@ -78,7 +78,7 @@
 	};
 };
 
-/* /home/dpi/qb5_8815/workspace/P4_1716/android/kernel/kmodule/battery/stable/r11/wireless/p9320/p9320_charger.r11s.dtsi */
+/* /home/dpi/qb5_8814/workspace/P4_1716/android/kernel/kmodule/battery/stable/r11/wireless/p9320/p9320_charger.r11s.dtsi */
 &hsi2c_32 {
 	samsung,stop-after-trans;
 	samsung,stand-mode;

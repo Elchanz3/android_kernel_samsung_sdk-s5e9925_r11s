@@ -78,7 +78,7 @@
 	};
 };
 
-/* /home/dpi/qb5_8815/workspace/P4_1716/android/kernel/kmodule/battery/stable/r11/wireless/s2miw04/s2miw04_charger.r11s.dtsi */
+/* /home/dpi/qb5_8814/workspace/P4_1716/android/kernel/kmodule/battery/stable/r11/wireless/s2miw04/s2miw04_charger.r11s.dtsi */
 #include <dt-bindings/battery/sec-battery.h>
 
 #if 1

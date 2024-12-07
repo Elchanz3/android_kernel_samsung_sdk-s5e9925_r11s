@@ -1233,8 +1233,6 @@ static int stm_ts_hw_init(struct stm_ts_data *ts)
 
 	input_info(true, ts->dev, "%s: Initialized\n", __func__);
 
-	stm_ts_init_proc(ts);
-
 	return ret;
 }
 

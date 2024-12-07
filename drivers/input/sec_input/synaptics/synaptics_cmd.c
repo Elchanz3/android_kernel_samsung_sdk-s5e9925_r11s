@@ -3481,6 +3481,28 @@ static void set_fold_state(void *device_data)
 	sec->cmd_state = SEC_CMD_STATUS_OK;
 }
 
+static void set_always_lpm(void *device_data)
+{
+	struct sec_cmd_data *sec = (struct sec_cmd_data *)device_data;
+	struct synaptics_ts_data *ts = container_of(sec, struct synaptics_ts_data, sec);
+
+	if (IS_NOT_FOLD_DEV(ts->multi_dev)) {
+		sec->cmd_state = SEC_CMD_STATUS_NOT_APPLICABLE;
+		return;
+	}
+
+	if (sec->cmd_param[0] < 0 || sec->cmd_param[0] > 1) {
+		sec->cmd_state = SEC_CMD_STATUS_FAIL;
+		return;
+	}
+
+	ts->plat_data->always_lpm = sec->cmd_param[0];
+
+	sec_input_set_fold_state(ts->multi_dev, ts->multi_dev->flip_status_current);
+
+	sec->cmd_state = SEC_CMD_STATUS_OK;
+}
+
 static int rawdata_store(void *device_data)
 {
 	struct sec_cmd_data *sec = (struct sec_cmd_data *)device_data;
@@ -3618,6 +3640,7 @@ static struct sec_cmd sec_cmds[] = {
 	{SEC_CMD_V2("debug", debug, NULL, CHECK_ALL, EXIT_RESULT),},
 	{SEC_CMD_V2("rawdata_init", rawdata_init, rawdata_store, CHECK_ON_LP, EXIT_RESULT),},
 	{SEC_CMD_V2("set_fold_state", set_fold_state, NULL, CHECK_ALL, EXIT_RESULT),},
+	{SEC_CMD_V2("set_always_lpm", set_always_lpm, NULL, CHECK_ALL, EXIT_RESULT),},
 	{SEC_CMD_V2("get_status", get_status, NULL, CHECK_ALL, EXIT_RESULT),},
 	{SEC_CMD_V2("not_support_cmd", not_support_cmd, NULL, CHECK_ALL, EXIT_RESULT),},
 };

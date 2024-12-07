@@ -787,7 +787,7 @@ int s6e3fc5_get_octa_id(struct panel_device *panel, void *buf)
 
 	panel_dbg("<CELL ID>\n");
 	for (i = 0; i < 16; i++) {
-		cell_id[i] = isalnum(octa_id[i + 4]) ? octa_id[i + 4] : '\0';
+		cell_id[i] = is_alphabet_or_num(octa_id[i + 4]) ? octa_id[i + 4] : '\0';
 		panel_dbg("%x -> %c\n", octa_id[i + 4], cell_id[i]);
 		if (cell_id[i] == '\0') {
 			cell_id_exist = false;

@@ -80,7 +80,7 @@ EXPORT_SYMBOL_GPL(sysctl_sched_features);
  * Number of tasks to iterate in a single balance run.
  * Limited because this is done with IRQs disabled.
  */
-const_debug unsigned int sysctl_sched_nr_migrate = 16; /* default 32 */
+const_debug unsigned int sysctl_sched_nr_migrate = 32;
 
 /*
  * period over which we measure -rt task CPU usage in us.
@@ -5438,8 +5438,7 @@ static void __setscheduler_params(struct task_struct *p,
 	if (policy == SETPARAM_POLICY)
 		policy = p->policy;
 
-	/* Replace SCHED_FIFO with SCHED_RR to reduce latency */
-	p->policy = policy == SCHED_FIFO ? SCHED_RR : policy;
+	p->policy = policy;
 
 	if (dl_policy(policy))
 		__setparam_dl(p, attr);

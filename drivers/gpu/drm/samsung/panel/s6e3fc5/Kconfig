@@ -8,3 +8,21 @@ menuconfig USDM_PANEL_S6E3FC5
 		common panel driver. say Y, if you have a panel based on
 		the S6E3FC5 DDI.
 
+
+########## FOR KUNIT ##########
+
+config S6E3FC5_TEST
+	bool "KUnit test for s6e3fc5 ddi driver"
+	depends on SEC_KUNIT
+	help
+	  TODO: Describe config fully.
+
+
+
+########## FOR KUNIT ##########
+
+config S6E3FC5_R11S_TEST
+	bool "KUnit test for tft_common ddi driver"
+	depends on SEC_KUNIT
+	help
+	  TODO: Describe config fully.

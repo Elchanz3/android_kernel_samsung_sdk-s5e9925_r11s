@@ -84,6 +84,12 @@ static void synaptics_ts_gesture_event(struct synaptics_ts_data *ts, u8 *event_b
 			input_sync(ts->plat_data->input_dev);
 		}
 	} else if (p_gesture_status->stype  == SYNAPTICS_TS_GESTURE_CODE_SINGLE_TAP) {
+		if (ts->multi_dev) {
+			if (ts->plat_data->always_lpm && ts->multi_dev->flip_status_current == FOLD_STATUS_UNFOLDING) {
+				input_info(true, ts->dev, "%s: single tap, but not use in this state\n", __func__);
+				return;
+			}
+		}
 		sec_input_gesture_report(ts->dev, SPONGE_EVENT_TYPE_SINGLE_TAP, x, y);
 	} else if (p_gesture_status->stype  == SYNAPTICS_TS_GESTURE_CODE_PRESS) {
 		if (p_gesture_status->gesture_id == SYNAPTICS_TS_GESTURE_ID_FOD_LONG ||

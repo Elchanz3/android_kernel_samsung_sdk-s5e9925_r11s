@@ -614,6 +614,7 @@ static void destroy_gre_conntrack(struct nf_conn *ct)
 static void
 destroy_conntrack(struct nf_conntrack *nfct)
 {
+	unsigned long flags;
 	struct nf_conn *ct = (struct nf_conn *)nfct;
 
     // SEC_PRODUCT_FEATURE_KNOX_SUPPORT_NPA {
@@ -1481,6 +1482,11 @@ static void gc_worker(struct work_struct *work)
 		gc_work->early_drop = false;
 		gc_work->next_bucket = 0;
 	}
+	// SEC_PRODUCT_FEATURE_KNOX_SUPPORT_NPA {
+	if ( (check_ncm_flag()) && (check_intermediate_flag()) ) {
+		next_run = 0;
+	}
+	// SEC_PRODUCT_FEATURE_KNOX_SUPPORT_NPA }
 
 	queue_delayed_work(system_power_efficient_wq, &gc_work->dwork, next_run);
 }
@@ -1579,6 +1585,7 @@ EXPORT_SYMBOL_GPL(nf_conntrack_alloc);
 
 void nf_conntrack_free(struct nf_conn *ct)
 {
+	unsigned long flags;
 	struct net *net = nf_ct_net(ct);
 
 	/* A freed object has refcnt == 0, that's

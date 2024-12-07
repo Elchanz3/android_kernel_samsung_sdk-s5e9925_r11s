@@ -268,6 +268,13 @@ config SCSI_UFS_HPB
 	  read command by piggybacking physical page number for bypassing FTL (flash
 	  translation layer)'s L2P address translation.
 
+config EXYNOS_UFS_EOM
+	tristate "SEC UFS eom feature"
+	depends on SCSI_UFSHCD
+	help
+	  Enable UFS eom feature.
+	  defined and implemented by SEC.
+
 config SEC_UFS_FEATURE
 	tristate "SEC specific UFS feature"
 	depends on SCSI_UFSHCD

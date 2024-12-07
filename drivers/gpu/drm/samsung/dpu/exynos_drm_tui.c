@@ -278,8 +278,8 @@ int exynos_atomic_enter_tui(void)
 					break;
 				}
 			}
-			exynos_pm_qos_update_request(&exynos_crtc->bts->disp_qos, disp_minlock_freq);
 
+			exynos_pm_qos_update_request(&exynos_crtc->bts->disp_qos, disp_minlock_freq);
 		} else {
 			DRM_DEV_ERROR(dev->dev, "disp qos setting error\n");
 		}

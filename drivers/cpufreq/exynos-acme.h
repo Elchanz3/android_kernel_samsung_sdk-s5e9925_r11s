@@ -64,8 +64,6 @@ struct exynos_cpufreq_domain {
 	unsigned int			boot_freq;
 	unsigned int			resume_freq;
 	unsigned int			old;
-	unsigned int			qos_max_freq;
-	unsigned int			user_default_qos;
 
 	/* freq qos */
 	struct freq_qos_request		min_qos_req;
@@ -78,12 +76,10 @@ struct exynos_cpufreq_domain {
 	struct exynos_cpufreq_file_operations	min_qos_fops;
 	struct exynos_cpufreq_file_operations	max_qos_fops;
 
-
 	/* fast-switch */
 	bool				fast_switch_possible;
 	bool				work_in_progress;
 	unsigned int			cached_fast_switch_freq;
-
 
 	struct irq_work			fast_switch_irq_work;
 	struct kthread_work		fast_switch_work;

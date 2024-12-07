@@ -39,20 +39,9 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(sched_stat_runtime);
  *
  * (default: 6ms * (1 + ilog(ncpus)), units: nanoseconds)
  */
-
-unsigned int sysctl_sched_latency			= 5000000ULL;
+unsigned int sysctl_sched_latency			= 6000000ULL;
 EXPORT_SYMBOL_GPL(sysctl_sched_latency);
-static unsigned int normalized_sysctl_sched_latency	= 5000000ULL;
-
-/*
- * Enable/disable honoring sync flag in energy-aware wakeups.
- */
-unsigned int sysctl_sched_sync_hint_enable = 1;
-
-/*
- * Enable/disable using cstate knowledge in idle sibling selection
- */
-unsigned int sysctl_sched_cstate_aware = 1;
+static unsigned int normalized_sysctl_sched_latency	= 6000000ULL;
 
 /*
  * The initial- and re-scaling of tunables is configurable
@@ -72,14 +61,14 @@ enum sched_tunable_scaling sysctl_sched_tunable_scaling = SCHED_TUNABLESCALING_L
  *
  * (default: 0.75 msec * (1 + ilog(ncpus)), units: nanoseconds)
  */
-unsigned int sysctl_sched_min_granularity			= 500000ULL;
+unsigned int sysctl_sched_min_granularity			= 750000ULL;
 EXPORT_SYMBOL_GPL(sysctl_sched_min_granularity);
-static unsigned int normalized_sysctl_sched_min_granularity	= 500000ULL;
+static unsigned int normalized_sysctl_sched_min_granularity	= 750000ULL;
 
 /*
  * This value is kept at sysctl_sched_latency/sysctl_sched_min_granularity
  */
-static unsigned int sched_nr_latency = 6;   // 8
+static unsigned int sched_nr_latency = 8;
 
 /*
  * After fork, child runs first. If set to 0 (default) then
@@ -143,7 +132,7 @@ int __weak arch_asym_cpu_priority(int cpu)
  *
  * (default: 5 msec, units: microseconds)
  */
-unsigned int sysctl_sched_cfs_bandwidth_slice		= 4000UL;   // 5000UL
+unsigned int sysctl_sched_cfs_bandwidth_slice		= 5000UL;
 #endif
 
 static inline void update_load_add(struct load_weight *lw, unsigned long inc)
@@ -4722,8 +4711,7 @@ pick_next_entity(struct cfs_rq *cfs_rq, struct sched_entity *curr)
 				second = curr;
 		}
 
-		if (second && (sched_feat(STRICT_SKIP_BUDDY) ||
-		    wakeup_preempt_entity(second, left) < 1))
+		if (second && wakeup_preempt_entity(second, left) < 1)
 			se = second;
 	}
 

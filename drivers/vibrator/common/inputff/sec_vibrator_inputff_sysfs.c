@@ -470,8 +470,10 @@ static ssize_t ls_calibration_results_store(struct device *dev,
 		dev_info(ddata->dev, "%s ls_calib_res ret : %d\n", __func__, ret);
 	} else {
 		dev_err(ddata->dev, "%s set_ls_calib_res doesn't support\n", __func__);
+		kfree(str_full);
 		return -EOPNOTSUPP;
 	}
+	kfree(str_full);
 	return count;
 }
 static DEVICE_ATTR_RW(ls_calibration_results);

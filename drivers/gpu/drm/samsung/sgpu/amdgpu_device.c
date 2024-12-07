@@ -4366,6 +4366,12 @@ static int amdgpu_device_pre_asic_reset(struct amdgpu_device *adev,
 		amdgpu_virt_fini_data_exchange(adev);
 	}
 
+	/*
+	 * GL2ACEM_RST.SRT_CP == 1 wait for bus to be quiesce
+	 * After SRT_CP ==1 driver cleans up any software state
+	 */
+	vangogh_lite_gpu_quiesce(adev);
+
 	/* block all schedulers and reset given job's ring */
 	for (i = 0; i < AMDGPU_MAX_RINGS; ++i) {
 		struct amdgpu_ring *ring = adev->rings[i];
@@ -4541,10 +4547,6 @@ void amdgpu_do_hard_reset(struct amdgpu_device *adev)
 
 	// issue a soft-reset to GRBM
 	vangogh_lite_gpu_soft_reset(adev);
-
-	// GL2ACEM_RST.SRT_CP == 1 wait for bus to be quiesce
-	// After SRT_CP ==1 driver cleans up any software state
-	vangogh_lite_gpu_quiesce(adev);
 
 	// touch the cpl_RESETn
 	vangogh_lite_gpu_hard_reset(adev);
