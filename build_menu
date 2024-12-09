@@ -7,12 +7,13 @@ DIR=`readlink -f .`
 OUT_DIR=$DIR/out
 PARENT_DIR=`readlink -f ${DIR}/..`
 
-export CROSS_COMPILE=$PARENT_DIR/clang-r416183b/bin/aarch64-linux-gnu-
-export CC=$PARENT_DIR/clang-r416183b/bin/clang
+export CROSS_COMPILE=$PARENT_DIR/toolchain/neutron_18/bin/aarch64-linux-gnu-
+export CC=$PARENT_DIR/toolchain/neutron_18/bin/clang
+export CLANG_DIR=$PARENT_DIR/toolchain/neutron_18
 
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
-export PATH=$PARENT_DIR/clang-r416183b/bin:$PATH
+export PATH=$PARENT_DIR/toolchain/neutron_18/bin:$PATH
 export PATH=$PARENT_DIR/build-tools/path/linux-x86:$PATH
 export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
@@ -34,11 +35,22 @@ pause(){
 }
 
 clang(){
-  if [ ! -d $PARENT_DIR/clang-r416183b ]; then
-    pause 'clone Android Clang/LLVM Prebuilts'
-    git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b $PARENT_DIR/clang-r416183b
-    . $DIR/build_menu
-  fi
+  if [ ! -f "$CLANG_DIR/bin/clang-18" ]; then
+    echo "-----------------------------------------------"
+    echo "Toolchain not found! Downloading..."
+    echo "-----------------------------------------------"
+    rm -rf $CLANG_DIR
+    mkdir -p $CLANG_DIR
+    pushd toolchain/neutron_18 > /dev/null
+    bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S=05012024
+    echo "-----------------------------------------------"
+    echo "Patching toolchain..."
+    echo "-----------------------------------------------"
+    bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
+    echo "-----------------------------------------------"
+    echo "Cleaning up..."
+    popd > /dev/null
+fi
 }
 
 gas(){
@@ -96,7 +108,11 @@ build_kernel(){
   echo "${GREEN}***** Compiling kernel *****${STD}"
   [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
   make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz_${VARIANT}_defconfig dtbs
-  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV 
+  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV
+
+    # generate dtbo image
+   
+  ./toolchain/mkdtimg cfg_create out/dtbo.img dtconfigs/r11s.cfg -d arch/arm64/boot/dts/samsung/r11s
 
   [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
   if [ -e $DIR/arch/arm64/boot/Image ]; then
@@ -119,19 +135,7 @@ anykernel3(){
     cd $PARENT_DIR/AnyKernel3
     git reset --hard
     cp $DIR/arch/arm64/boot/Image zImage
-    sed -i "s/ExampleKernel by osm0sis/${VARIANT} kernel by Chanz22" anykernel.sh
-    sed -i "s/=maguro/=${VARIANT}/g" anykernel.sh
-    sed -i "s/=toroplus/=/g" anykernel.sh
-    sed -i "s/=toro/=/g" anykernel.sh
-    sed -i "s/=tuna/=/g" anykernel.sh
-    sed -i "s/platform\/omap\/omap_hsmmc\.0\/by-name\/boot/bootdevice\/by-name\/boot/g" anykernel.sh
-    sed -i "s/backup_file/#backup_file/g" anykernel.sh
-    sed -i "s/replace_string/#replace_string/g" anykernel.sh
-    sed -i "s/insert_line/#insert_line/g" anykernel.sh
-    sed -i "s/append_file/#append_file/g" anykernel.sh
-    sed -i "s/patch_fstab/#patch_fstab/g" anykernel.sh
-    sed -i "s/dump_boot/split_boot/g" anykernel.sh
-    sed -i "s/write_boot/flash_boot/g" anykernel.sh
+    cp $DIR/dtbo.img dtbo 
     zip -r9 $PARENT_DIR/${VARIANT}_kernel_`cat $DIR/include/config/kernel.release`_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
     cd $DIR
     pause 'continue'
