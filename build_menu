@@ -1,10 +1,10 @@
 #!/bin/bash
-# AFANEH-KERNEL-BUILD
+# AFANEH-KERNEL-BUILD menu
 
 # Variables
-menu_version="v2.4"
+menu_version="v2.3"
 DIR=`readlink -f .`
-KOUT_DIR=$DIR/kout
+OUT_DIR=$DIR/out
 PARENT_DIR=`readlink -f ${DIR}/..`
 
 export CROSS_COMPILE=$PARENT_DIR/clang-r416183b/bin/aarch64-linux-gnu-
@@ -21,13 +21,13 @@ export ARCH=arm64
 KERNEL_MAKE_ENV="LOCALVERSION=HarmoniX"
 
 # Color
-ON_BLUE=`echo -e "\033[44m"`
-BRED=`echo -e "\033[1;31m"`
-BBLUE=`echo -e "\033[1;34m"`
-BGREEN=`echo -e "\033[1;32m"`
-UNDER_LINE=`echo -e "\e[4m"`
-STD=`echo -e "\033[0m"`
-
+ON_BLUE=`echo -e "\033[44m"`	# On Blue
+BRED=`echo -e "\033[1;31m"`	# Bold Red
+BBLUE=`echo -e "\033[1;34m"`	# Bold Blue
+BGREEN=`echo -e "\033[1;32m"`	# Bold Green
+UNDER_LINE=`echo -e "\e[4m"`	# Text Under Line
+STD=`echo -e "\033[0m"`		# Text Clear
+ 
 # Functions
 pause(){
   read -p "${BRED}$2${STD}Press ${BBLUE}[Enter]${STD} key to $1..." fackEnterKey
@@ -84,45 +84,29 @@ variant(){
 
 clean(){
   echo "${BGREEN}***** Cleaning in Progress *****${STD}"
-  make clean O=$KOUT_DIR
-  make mrproper O=$KOUT_DIR
-  [ -d "$KOUT_DIR" ] && rm -rf $KOUT_DIR
+  make clean
+  make mrproper
+  [ -d "$OUT_DIR" ] && rm -rf $OUT_DIR
   echo "${BGREEN}***** Cleaning Done *****${STD}"
   pause 'continue'
 }
 
 build_kernel(){
   variant
-  echo "${BGREEN}***** Compiling kernel *****${STD}"
-  [ ! -d "$KOUT_DIR" ] && mkdir -p $KOUT_DIR
-  make -j$(nproc) -C $(pwd) O=$KOUT_DIR $KERNEL_MAKE_ENV chanz_${VARIANT}_defconfig dtbs
-  make -j$(nproc) -C $(pwd) O=$KOUT_DIR $KERNEL_MAKE_ENV 
+  echo "${GREEN}***** Compiling kernel *****${STD}"
+  [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
+  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz_${VARIANT}_defconfig dtbs
+  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV 
 
-  [ -e $KOUT_DIR/arch/arm64/boot/Image.gz ] && cp $KOUT_DIR/arch/arm64/boot/Image.gz $KOUT_DIR/Image.gz
-  if [ -e $KOUT_DIR/arch/arm64/boot/Image ]; then
-    cp $KOUT_DIR/arch/arm64/boot/Image $KOUT_DIR/Image
+  [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
+  if [ -e $DIR/arch/arm64/boot/Image ]; then
+    cp $DIR/arch/arm64/boot/Image $OUT_DIR/Image
+
     echo "${BGREEN}***** Ready to Roar *****${STD}"
     pause 'continue'
   else
     pause 'return to Main menu' 'Kernel STUCK in BUILD!, '
   fi
-}
-
-generate_dtbo(){
-  echo "${BGREEN}***** Generating DTBO Image *****${STD}"
-  if [ ! -e $DIR/toolchain/mkdtimg ]; then
-    echo "${BRED}Error: mkdtimg tool not found in toolchain directory!${STD}"
-    pause 'return to Main menu'
-    return
-  fi
-  [ ! -d "$KOUT_DIR" ] && mkdir -p $KOUT_DIR
-  $DIR/toolchain/mkdtimg cfg_create $KOUT_DIR/dtbo.img dtconfigs/r11s.cfg -d arch/arm64/boot/dts/samsung/r11s
-  if [ -e $KOUT_DIR/dtbo.img ]; then
-    echo "${BGREEN}DTBO Image created successfully at: $KOUT_DIR/dtbo.img${STD}"
-  else
-    echo "${BRED}Failed to create DTBO Image!${STD}"
-  fi
-  pause 'continue'
 }
 
 anykernel3(){
@@ -131,10 +115,10 @@ anykernel3(){
     git clone https://github.com/osm0sis/AnyKernel3 $PARENT_DIR/AnyKernel3
   fi
   variant
-  if [ -e $KOUT_DIR/arch/arm64/boot/Image ]; then
+  if [ -e $DIR/arch/arm64/boot/Image ]; then
     cd $PARENT_DIR/AnyKernel3
     git reset --hard
-    cp $KOUT_DIR/arch/arm64/boot/Image zImage
+    cp $DIR/arch/arm64/boot/Image zImage
     sed -i "s/ExampleKernel by osm0sis/${VARIANT} kernel by Chanz22" anykernel.sh
     sed -i "s/=maguro/=${VARIANT}/g" anykernel.sh
     sed -i "s/=toroplus/=/g" anykernel.sh
@@ -168,20 +152,18 @@ show_menus(){
   echo " 1. ${UNDER_LINE}B${STD}uild kernel"
   echo " 2. ${UNDER_LINE}C${STD}lean"
   echo " 3. Make ${UNDER_LINE}f${STD}lashable zip"
-  echo " 4. Generate ${UNDER_LINE}D${STD}TBO"
-  echo " 5. E${UNDER_LINE}x${STD}it"
+  echo " 4. E${UNDER_LINE}x${STD}it"
 }
 
 # Read input
 read_options(){
   local choice
-  read -p "Enter choice [ 1 - 5 ] " choice
+  read -p "Enter choice [ 1 - 4 ] " choice
   case $choice in
     1|b|B) build_kernel ;;
     2|c|C) clean ;;
     3|f|F) anykernel3 ;;
-    4|d|D) generate_dtbo ;;
-    5|x|X) exit 0 ;;
+    4|x|X) exit 0 ;;
     *) pause 'return to Main menu' 'Invalid option, '
   esac
 }
@@ -195,4 +177,3 @@ do
   show_menus
   read_options
 done
-
