@@ -5,3 +5,5 @@
 *.d
 /.thinlto-cache
 *.lds
+*.dtbo
+/arch/arm64/boot/dts/allwinner
