@@ -7,19 +7,18 @@ DIR=`readlink -f .`
 OUT_DIR=$DIR/out
 PARENT_DIR=`readlink -f ${DIR}/..`
 
-export CROSS_COMPILE=$PARENT_DIR/toolchain/neutron_18/bin/aarch64-linux-gnu-
-export CC=$PARENT_DIR/toolchain/neutron_18/bin/clang
-export CLANG_DIR=$PARENT_DIR/toolchain/neutron_18
+export CROSS_COMPILE=$PARENT_DIR/clang-r416183b/bin/aarch64-linux-gnu-
+export CC=$PARENT_DIR/clang-r416183b/bin/clang
 
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
-export PATH=$PARENT_DIR/toolchain/neutron_18/bin:$PATH
+export PATH=$PARENT_DIR/clang-r416183b/bin:$PATH
 export PATH=$PARENT_DIR/build-tools/path/linux-x86:$PATH
 export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
 export LLVM=1 LLVM_IAS=1
 export ARCH=arm64
-KERNEL_MAKE_ENV="LOCALVERSION=HarmoniX"
+KERNEL_MAKE_ENV="LOCALVERSION=-v1.0"
 
 # Color
 ON_BLUE=`echo -e "\033[44m"`	# On Blue
@@ -35,22 +34,11 @@ pause(){
 }
 
 clang(){
-  if [ ! -f "$CLANG_DIR/bin/clang-18" ]; then
-    echo "-----------------------------------------------"
-    echo "Toolchain not found! Downloading..."
-    echo "-----------------------------------------------"
-    rm -rf $CLANG_DIR
-    mkdir -p $CLANG_DIR
-    pushd toolchain/neutron_18 > /dev/null
-    bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S=05012024
-    echo "-----------------------------------------------"
-    echo "Patching toolchain..."
-    echo "-----------------------------------------------"
-    bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") --patch=glibc
-    echo "-----------------------------------------------"
-    echo "Cleaning up..."
-    popd > /dev/null
-fi
+  if [ ! -d $PARENT_DIR/clang-r416183b ]; then
+    pause 'clone Android Clang/LLVM Prebuilts'
+    git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b $PARENT_DIR/clang-r416183b
+    . $DIR/build_menu
+  fi
 }
 
 gas(){
@@ -126,17 +114,12 @@ build_kernel(){
 }
 
 anykernel3(){
-  if [ ! -d $PARENT_DIR/AnyKernel3 ]; then
-    pause 'clone AnyKernel3 - Flashable Zip Template'
-    git clone https://github.com/osm0sis/AnyKernel3 $PARENT_DIR/AnyKernel3
-  fi
   variant
   if [ -e $DIR/arch/arm64/boot/Image ]; then
-    cd $PARENT_DIR/AnyKernel3
-    git reset --hard
-    cp $DIR/arch/arm64/boot/Image zImage
-    cp $DIR/dtbo.img dtbo 
-    zip -r9 $PARENT_DIR/${VARIANT}_kernel_`cat $DIR/include/config/kernel.release`_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
+    cd AnyKernel3
+    cp $DIR/arch/arm64/boot/Image Image
+    cp $DIR/out/dtbo.img dtbo
+    zip -r9 ${VARIANT}_kernel_`cat $DIR/include/config/kernel.release`_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
     cd $DIR
     pause 'continue'
   else
