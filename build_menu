@@ -41,7 +41,7 @@ clang(){
     echo "-----------------------------------------------"
     rm -rf $CLANG_DIR
     mkdir -p $CLANG_DIR
-    pushd $CLANG_DIR > /dev/null
+    pushd toolchain/neutron_18 > /dev/null
     bash <(curl -s "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman") -S=05012024
     echo "-----------------------------------------------"
     echo "Patching toolchain..."
