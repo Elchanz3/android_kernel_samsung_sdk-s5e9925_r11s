@@ -19,7 +19,7 @@ export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
 export LLVM=1 LLVM_IAS=1
 export ARCH=arm64
-KERNEL_MAKE_ENV="LOCALVERSION=-HarmoniX"
+KERNEL_MAKE_ENV="LOCALVERSION=HarmoniX"
 
 # Color
 ON_BLUE=`echo -e "\033[44m"`	# On Blue
@@ -126,12 +126,17 @@ build_kernel(){
 }
 
 anykernel3(){
+  if [ ! -d $PARENT_DIR/AnyKernel3 ]; then
+    pause 'clone AnyKernel3 - Flashable Zip Template'
+    git clone https://github.com/osm0sis/AnyKernel3 $PARENT_DIR/AnyKernel3
+  fi
   variant
   if [ -e $DIR/arch/arm64/boot/Image ]; then
-    cd AnyKernel3
+    cd $PARENT_DIR/AnyKernel3
+    git reset --hard
     cp $DIR/arch/arm64/boot/Image zImage
     cp $DIR/dtbo.img dtbo 
-    zip -r9 ${VARIANT}_kernel_`cat $DIR/include/config/kernel.release`_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
+    zip -r9 $PARENT_DIR/${VARIANT}_kernel_`cat $DIR/include/config/kernel.release`_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
     cd $DIR
     pause 'continue'
   else
