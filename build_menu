@@ -98,9 +98,11 @@ build_kernel(){
   make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz_${VARIANT}_defconfig dtbs
   make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV
 
-    # generate dtbo image
+    # generate dtbo and dtb image
    
   ./toolchain/mkdtimg cfg_create out/dtbo.img dtconfigs/r11s.cfg -d arch/arm64/boot/dts/samsung/r11s
+  
+  ./toolchain/mkdtimg cfg_create out/dtb.img dtconfigs/exynos2200.cfg -d arch/arm64/boot/dts/exynos
 
   [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
   if [ -e $DIR/arch/arm64/boot/Image ]; then
