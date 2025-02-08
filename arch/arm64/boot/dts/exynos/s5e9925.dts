@@ -6553,14 +6553,14 @@
 			dm-type = <0x00>;
 			dss-type = <0x00>;
 			max-freq = <0x1bd500>;
-			min-freq = <0x61a80>;
+			min-freq = <0x1bd500>;
 			pm_qos-booting = <0x1bd500>;
 			fast-switch;
 			thread-run-on = "0-5";
 			#cooling-cells = <0x02>;
 			ect-coeff-index = <0x02>;
 			tz-cooling-name = "LITTLE";
-			freq-table = <0x61a80 0x1bd500>;
+			freq-table = <0x1bd500>;
 			phandle = <0x11e>;
 
 			dm-constraints {
