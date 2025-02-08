@@ -1,168 +1,151 @@
 #!/bin/bash
-# AFANEH-KERNEL-BUILD menu
+
+set -e  # Exit on error
 
 # Variables
-menu_version="v2.3"
-DIR=`readlink -f .`
-OUT_DIR=$DIR/out
-PARENT_DIR=`readlink -f ${DIR}/..`
+export MENU_VERSION="Galaxy-S23FE_builder"
+export DIR="$(readlink -f .)"
+export OUT_DIR="$DIR/out"
+export PARENT_DIR="$(readlink -f "$DIR/..")"
 
-export CROSS_COMPILE=$PARENT_DIR/clang-r416183b/bin/aarch64-linux-gnu-
-export CC=$PARENT_DIR/clang-r416183b/bin/clang
+export CROSS_COMPILE="$PARENT_DIR/clang-r416183b/bin/aarch64-linux-gnu-"
+export CC="$PARENT_DIR/clang-r416183b/bin/clang"
 
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
-export PATH=$PARENT_DIR/clang-r416183b/bin:$PATH
-export PATH=$PARENT_DIR/build-tools/path/linux-x86:$PATH
-export PATH=$PARENT_DIR/gas/linux-x86:$PATH
 export TARGET_SOC=s5e9925
-export LLVM=1 LLVM_IAS=1
+export LLVM=1
+export LLVM_IAS=1
 export ARCH=arm64
-KERNEL_MAKE_ENV="LOCALVERSION=-v1.0"
+export KERNEL_MAKE_ENV="LOCALVERSION=-v1.0"
 
-# Color
-ON_BLUE=`echo -e "\033[44m"`	# On Blue
-BRED=`echo -e "\033[1;31m"`	# Bold Red
-BBLUE=`echo -e "\033[1;34m"`	# Bold Blue
-BGREEN=`echo -e "\033[1;32m"`	# Bold Green
-UNDER_LINE=`echo -e "\e[4m"`	# Text Under Line
-STD=`echo -e "\033[0m"`		# Text Clear
- 
+export PATH="$PARENT_DIR/clang-r416183b/bin:$PARENT_DIR/build-tools/path/linux-x86:$PARENT_DIR/gas/linux-x86:$PATH"
+
+# Colors
+BOLD_RED=$(tput bold; tput setaf 1)
+BOLD_BLUE=$(tput bold; tput setaf 4)
+BOLD_GREEN=$(tput bold; tput setaf 2)
+UNDERLINE=$(tput smul)
+RESET=$(tput sgr0)
+
 # Functions
-pause(){
-  read -p "${BRED}$2${STD}Press ${BBLUE}[Enter]${STD} key to $1..." fackEnterKey
+pause() {
+  read -rp "${BOLD_RED}$2${RESET}Press ${BOLD_BLUE}[Enter]${RESET} to $1..."
 }
 
-clang(){
-  if [ ! -d $PARENT_DIR/clang-r416183b ]; then
-    pause 'clone Android Clang/LLVM Prebuilts'
-    git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b $PARENT_DIR/clang-r416183b
-    . $DIR/build_menu
+check_and_clone() {
+  local repo_url="$1"
+  local dest_dir="$2"
+  local description="$3"
+
+  if [ ! -d "$dest_dir" ]; then
+    pause "clone $description"
+    git clone "$repo_url" "$dest_dir"
   fi
 }
 
-gas(){
-  if [ ! -d $PARENT_DIR/gas/linux-x86 ]; then
-    pause 'clone prebuilt binaries of GNU `as` (the assembler)'
-    git clone https://android.googlesource.com/platform/prebuilts/gas/linux-x86 $PARENT_DIR/gas/linux-x86
-    . $DIR/build_menu
-  fi
-}
+variant() {
+  local configs
+  configs=($(ls arch/arm64/configs/chanz_r11s_defconfig* 2>/dev/null))
 
-build_tools(){
-  if [ ! -d $PARENT_DIR/build-tools ]; then
-    pause 'clone prebuilt binaries of build tools'
-    git clone https://android.googlesource.com/platform/prebuilts/build-tools $PARENT_DIR/build-tools
-    . $DIR/build_menu
+  if [ ${#configs[@]} -eq 0 ]; then
+    pause "return to main menu" "No variants found! "
+    return
   fi
-}
 
-variant(){
-  findconfig=""
-  findconfig=($(ls arch/arm64/configs/chanz_r11s_defconfig* 2>/dev/null))
-  declare -i i=1
-  shift 2
   echo ""
-  echo "${ON_BLUE}Variant Selection:${STD}"
-  for e in "${findconfig[@]}"; do
-    echo " $i. $(basename $e | cut -d'_' -f2)"
-    i=i+1
+  echo "${BOLD_BLUE}Variant Selection:${RESET}"
+  for i in "${!configs[@]}"; do
+    echo " $((i + 1)). $(basename "${configs[i]}" | cut -d'_' -f2)"
   done
+
   local choice
-  read -p "Enter choice [ 1 - $((i-1)) ] " choice
-  i="$choice"
-  if [[ $i -gt 0 && $i -le ${#findconfig[@]} ]]; then
-    export v="${findconfig[$i-1]}"
-    export VARIANT=$(basename $v | cut -d'_' -f2)
-    echo ${VARIANT} selected
-    pause 'continue'
+  read -rp "Enter choice [1 - ${#configs[@]}]: " choice
+  if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice > 0 && choice <= ${#configs[@]} )); then
+    VARIANT="$(basename "${configs[choice - 1]}" | cut -d'_' -f2)"
+    echo "Variant ${VARIANT} selected"
+    pause "continue"
   else
-    pause 'return to Main menu' 'Invalid option, '
-    . $DIR/build_menu
+    pause "return to main menu" "Invalid option, "
   fi
 }
 
-clean(){
-  echo "${BGREEN}***** Cleaning in Progress *****${STD}"
-  make clean
-  make mrproper
-  [ -d "$OUT_DIR" ] && rm -rf $OUT_DIR
-  echo "${BGREEN}***** Cleaning Done *****${STD}"
-  pause 'continue'
+clean() {
+  echo "${BOLD_GREEN}***** Cleaning directories *****${RESET}"
+  make clean && make mrproper
+  rm -rf "$OUT_DIR"
+  echo "${BOLD_GREEN}***** Cleaning complete *****${RESET}"
+  pause "continue"
 }
 
-build_kernel(){
+build_kernel() {
   variant
-  echo "${GREEN}***** Compiling kernel *****${STD}"
-  [ ! -d "$OUT_DIR" ] && mkdir $OUT_DIR
-  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV chanz_${VARIANT}_defconfig dtbs
-  make -j$(nproc) -C $(pwd) $KERNEL_MAKE_ENV
+  echo "${BOLD_GREEN}***** Compiling kernel *****${RESET}"
+  mkdir -p "$OUT_DIR"
 
-    # generate dtbo and dtb image
-   
+  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV "chanz_${VARIANT}_defconfig" dtbs
+  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV
+
+  # Generate dtbo and dtb
   ./toolchain/mkdtimg cfg_create out/dtbo.img dtconfigs/r11s.cfg -d arch/arm64/boot/dts/samsung/r11s
-  
   ./toolchain/mkdtimg cfg_create out/dtb.img dtconfigs/exynos2200.cfg -d arch/arm64/boot/dts/exynos
 
-  [ -e $DIR/arch/arm64/boot/Image.gz ] && cp $DIR/arch/arm64/boot/Image.gz $OUT_DIR/Image.gz
-  if [ -e $DIR/arch/arm64/boot/Image ]; then
-    cp $DIR/arch/arm64/boot/Image $OUT_DIR/Image
+  if [ -e "$DIR/arch/arm64/boot/Image.gz" ]; then
+    cp "$DIR/arch/arm64/boot/Image.gz" "$OUT_DIR/Image.gz"
+  fi
 
-    echo "${BGREEN}***** Ready to Roar *****${STD}"
-    pause 'continue'
+  if [ -e "$DIR/arch/arm64/boot/Image" ]; then
+    cp "$DIR/arch/arm64/boot/Image" "$OUT_DIR/Image"
+    echo "${BOLD_GREEN}***** Ready to flash! *****${RESET}"
+    pause "continue"
   else
-    pause 'return to Main menu' 'Kernel STUCK in BUILD!, '
+    pause "return to main menu" "Kernel build failed!"
   fi
 }
 
-anykernel3(){
+anykernel3() {
   variant
-  if [ -e $DIR/arch/arm64/boot/Image ]; then
-    cd AnyKernel3
-    cp $DIR/arch/arm64/boot/Image Image
-    cp $DIR/out/dtbo.img dtbo
-    zip -r9 ${VARIANT}_kernel_`cat $DIR/include/config/kernel.release`_`date '+%Y_%m_%d'`.zip * -x .git README.md *placeholder
-    cd $DIR
-    pause 'continue'
+  if [ -e "$DIR/arch/arm64/boot/Image" ]; then
+    cd AnyKernel3 || exit
+    cp "$DIR/arch/arm64/boot/Image" Image
+    cp "$DIR/out/dtbo.img" dtbo
+    zip -r9 "${VARIANT}_kernel_$(cat "$DIR/include/config/kernel.release")_$(date '+%Y_%m_%d').zip" * -x .git README.md *placeholder
+    cd "$DIR" || exit
+    pause "continue"
   else
-    pause 'return to Main menu' 'Build kernel first, '
+    pause "return to main menu" "Build the kernel first! "
   fi
 }
 
-# Run once
-clang
-gas
-build_tools
+# Run dependency checks
+check_and_clone "https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b" "$PARENT_DIR/clang-r416183b" "Android Clang/LLVM"
+check_and_clone "https://android.googlesource.com/platform/prebuilts/gas/linux-x86" "$PARENT_DIR/gas/linux-x86" "GNU assembler"
+check_and_clone "https://android.googlesource.com/platform/prebuilts/build-tools" "$PARENT_DIR/build-tools" "Build tools"
 
-# Show menu
-show_menus(){
+# Menu
+show_menus() {
   clear
-  echo "${ON_BLUE}AFANEH-KERNEL-BUILD menu $menu_version${STD}"
-  echo " 1. ${UNDER_LINE}B${STD}uild kernel"
-  echo " 2. ${UNDER_LINE}C${STD}lean"
-  echo " 3. Make ${UNDER_LINE}f${STD}lashable zip"
-  echo " 4. E${UNDER_LINE}x${STD}it"
+  echo "${BOLD_BLUE} Weibo Build Menu $MENU_VERSION${RESET}"
+  echo " 1. ${UNDERLINE}Build${RESET} Kernel"
+  echo " 2. ${UNDERLINE}Clean${RESET} directories"
+  echo " 3. Create ${UNDERLINE}Flashable ZIP${RESET}"
+  echo " 4. ${UNDERLINE}Exit${RESET}"
 }
 
-# Read input
-read_options(){
+read_options() {
   local choice
-  read -p "Enter choice [ 1 - 4 ] " choice
+  read -rp "Enter choice [1-4]: " choice
   case $choice in
-    1|b|B) build_kernel ;;
-    2|c|C) clean ;;
-    3|f|F) anykernel3 ;;
-    4|x|X) exit 0 ;;
-    *) pause 'return to Main menu' 'Invalid option, '
+    1) build_kernel ;;
+    2) clean ;;
+    3) anykernel3 ;;
+    4) exit 0 ;;
+    *) pause "return to menu" "Invalid option! " ;;
   esac
 }
 
-# Trap CTRL+C, CTRL+Z and quit singles
-trap '' SIGINT SIGQUIT SIGTSTP
- 
-# Step # Main logic - infinite loop
-while true
-do
+while true; do
   show_menus
   read_options
 done
+
