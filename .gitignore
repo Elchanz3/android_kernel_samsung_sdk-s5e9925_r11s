@@ -7,3 +7,12 @@
 *.lds
 *.dtbo
 /arch/arm64/boot/dts/allwinner
+arch/arm64/boot/dts/samsung/r11s/r11s_eur_openx_w01_r05.dtbo.reverse.dts
+arch/arm64/boot/dts/samsung/r11s/r11s_eur_openx_w01_r03.dtbo.reverse.dts
+arch/arm64/boot/dts/samsung/r11s/r11s_eur_openx_w01_r02.dtbo.reverse.dts
+arch/arm64/boot/dts/samsung/r11s/r11s_eur_openx_w01_r01.dtbo.reverse.dts
+arch/arm64/boot/dts/samsung/r11s/r11s_eur_openx_w01_r00.dtbo.reverse.dts
+arch/arm64/boot/dts/exynos/s5e9925.dtb.reverse.dts
+arch/arm64/boot/dts/exynos/exynos7-espresso.dtb.reverse.dts
+arch/arm64/boot/dts/exynos/exynos5433-tm2e.dtb.reverse.dts
+arch/arm64/boot/dts/exynos/exynos5433-tm2.dtb.reverse.dts
