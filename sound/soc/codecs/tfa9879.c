@@ -66,6 +66,9 @@ static int tfa9879_hw_params(struct snd_pcm_substream *substream,
 	case 96000:
 		fs = TFA9879_I2S_FS_96000;
 		break;
+	case 192000:
+		fs = TFA9879_I2S_FS_192000;
+		break;
 	default:
 		return -EINVAL;
 	}

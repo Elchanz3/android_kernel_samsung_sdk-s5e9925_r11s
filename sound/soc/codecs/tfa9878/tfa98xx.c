@@ -52,9 +52,9 @@
 
 /* Supported rates and data formats */
 #define TFA98XX_RATES (SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_32000 | \
-SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000)
+SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_96000)
 
-static unsigned int sr_converted = 48000;
+static unsigned int sr_converted = 96000;
 
 #define TFA98XX_FORMATS	(SNDRV_PCM_FMTBIT_S16_LE | \
 SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE)
@@ -155,11 +155,11 @@ static const struct tfa98xx_rate rate_to_fssel[] = {
 	{24000, 5},
 	{32000, 6},
 	{44100, 7},
-	{48000, 8},
+	{96000, 8},
 };
 
 static const unsigned int index_to_rate[] = {
-	5512, 8000, 11025, 16000, 22050, 32000, 44100, 48000
+	5512, 8000, 11025, 16000, 22050, 32000, 44100, 96000
 };
 
 static inline char *_tfa_cont_profile_name
@@ -5835,7 +5835,7 @@ static int tfa98xx_i2c_probe(struct i2c_client *i2c,
 	tfa98xx->dev = &i2c->dev;
 	tfa98xx->i2c = i2c;
 	tfa98xx->dsp_init = TFA98XX_DSP_INIT_STOPPED;
-	tfa98xx->rate = 48000; /* init to the default sample rate (48kHz) */
+	tfa98xx->rate = 96000; /* init to the default sample rate (48kHz) */
 	tfa98xx->tfa = NULL;
 
 	tfa98xx->regmap = devm_regmap_init_i2c(i2c, &tfa98xx_regmap);
