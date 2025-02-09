@@ -2,7 +2,7 @@
 VERSION = 5
 PATCHLEVEL = 10
 SUBLEVEL = 198
-EXTRAVERSION =-WeiboKernel
+EXTRAVERSION =
 NAME = Dare mighty things
 
 ifeq ($(MAKECMDGOALS),)
