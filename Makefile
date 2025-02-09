@@ -2,12 +2,8 @@
 VERSION = 5
 PATCHLEVEL = 10
 SUBLEVEL = 198
-EXTRAVERSION =
+EXTRAVERSION =-WeiboKernel
 NAME = Dare mighty things
-
-ifeq ($(MAKECMDGOALS),)
-MAKECMDGOALS := Image.lz4
-endif
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
@@ -130,8 +126,6 @@ export quiet Q KBUILD_VERBOSE
 #
 # The O= assignment takes precedence over the KBUILD_OUTPUT environment
 # variable.
-
-KBUILD_OUTPUT := kout
 
 # Do we want to change the working directory?
 ifeq ("$(origin O)", "command line")
@@ -394,8 +388,7 @@ include scripts/subarch.include
 # Alternatively CROSS_COMPILE can be set in the environment.
 # Default value for CROSS_COMPILE is not to prefix executables
 # Note: Some architectures assign CROSS_COMPILE in their arch/*/Makefile
-ARCH		:= arm64
-CROSS_COMPILE	?= aarch64-linux-gnu-
+ARCH		?= $(SUBARCH)
 
 # Architecture as present in compile.h
 UTS_MACHINE 	:= $(ARCH)
@@ -682,10 +675,6 @@ export KBUILD_MODULES KBUILD_BUILTIN
 
 ifdef need-config
 include include/config/auto.conf
-endif
-
-ifdef CONFIG_INTEGRATE_MODULES
-KBUILD_CFLAGS_MODULE += -include $(srctree)/include/linux/integrated_module.h
 endif
 
 ifeq ($(KBUILD_EXTMOD),)
