@@ -466,7 +466,7 @@ flash_generic() {
   done;
 
   if [ "$img" -a ! -f ${1}_flashed ]; then
-    for path in /dev/block/mapper /dev/block/by-name /dev/block/bootdevice/by-name; do
+    for path in /dev/block/mapper /dev/block/by-name /dev/block/platform/11100000.ufs/by-name; do
       for file in $1 $1$SLOT; do
         if [ -e $path/$file ]; then
           imgblock=$path/$file;
@@ -488,7 +488,7 @@ flash_generic() {
         [ $? == 0 ] || abort "Failed to parse top-level vbmeta. Aborting...";
         if [ "$flags" == "enabled" ]; then
           ui_print " " "dm-verity detected! Patching $avb...";
-          for avbpath in /dev/block/mapper /dev/block/by-name /dev/block/bootdevice/by-name; do
+          for avbpath in /dev/block/mapper /dev/block/by-name /dev/block/platform/11100000.ufs/by-name; do
             for file in $avb $avb$SLOT; do
               if [ -e $avbpath/$file ]; then
                 avbblock=$avbpath/$file;
@@ -858,7 +858,7 @@ setup_ak() {
   rmdir -p modules patch ramdisk 2>/dev/null;
 
   # automate simple multi-partition setup for hdr_v4 boot + init_boot + vendor_kernel_boot (for dtb only until magiskboot supports hdr v4 vendor_ramdisk unpack/repack)
-  if [ -e "/dev/block/bootdevice/by-name/init_boot$SLOT" -a ! -f init_v4_setup ] && [ -f dtb -o -d vendor_ramdisk -o -d vendor_patch ]; then
+  if [ -e "/dev/block/platform/11100000.ufs/by-name/init_boot$SLOT" -a ! -f init_v4_setup ] && [ -f dtb -o -d vendor_ramdisk -o -d vendor_patch ]; then
     echo "Setting up for simple automatic init_boot flashing..." >&2;
     (mkdir boot-files;
     mv -f Image* boot-files;
@@ -870,7 +870,7 @@ setup_ak() {
     mv -f vendor_patch vendor_kernel_boot-files/patch) 2>/dev/null;
     touch init_v4_setup;
   # automate simple multi-partition setup for hdr_v3+ boot + vendor_boot with dtb/dlkm (for v3 only until magiskboot supports hdr v4 vendor_ramdisk unpack/repack)
-  elif [ -e "/dev/block/bootdevice/by-name/vendor_boot$SLOT" -a ! -f vendor_v3_setup ] && [ -f dtb -o -d vendor_ramdisk -o -d vendor_patch ]; then
+  elif [ -e "/dev/block/platform/11100000.ufs/by-name/vendor_boot$SLOT" -a ! -f vendor_v3_setup ] && [ -f dtb -o -d vendor_ramdisk -o -d vendor_patch ]; then
     echo "Setting up for simple automatic vendor_boot flashing..." >&2;
     (mkdir boot-files;
     mv -f Image* ramdisk patch boot-files;
@@ -915,8 +915,8 @@ setup_ak() {
             [ -e /dev/mtd/$mtdname ] && target=/dev/mtd/$mtdname;
           elif [ -e /dev/block/by-name/$part ]; then
             target=/dev/block/by-name/$part;
-          elif [ -e /dev/block/bootdevice/by-name/$part ]; then
-            target=/dev/block/bootdevice/by-name/$part;
+          elif [ -e /dev/block/platform/11100000.ufs/by-name/$part ]; then
+            target=/dev/block/platform/11100000.ufs/by-name/$part;
           elif [ -e /dev/block/platform/*/by-name/$part ]; then
             target=/dev/block/platform/*/by-name/$part;
           elif [ -e /dev/block/platform/*/*/by-name/$part ]; then
