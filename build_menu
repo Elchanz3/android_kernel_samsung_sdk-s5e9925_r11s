@@ -83,19 +83,19 @@ build_kernel() {
   echo "${BOLD_GREEN}***** Compiling kernel *****${RESET}"
   mkdir -p "$OUT_DIR"
 
-  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV "chanz_${VARIANT}_defconfig" dtbs
-  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV
+  make O=kout -j12 -C "$(pwd)" $KERNEL_MAKE_ENV "chanz_${VARIANT}_defconfig" dtbs
+  make O=kout -j12 -C "$(pwd)" $KERNEL_MAKE_ENV
 
   # Generate dtbo and dtb
   ./toolchain/mkdtimg cfg_create out/dtbo.img dtconfigs/r11s.cfg -d arch/arm64/boot/dts/samsung/r11s
   ./toolchain/mkdtimg cfg_create out/dtb.img dtconfigs/exynos2200.cfg -d arch/arm64/boot/dts/exynos
 
-  if [ -e "$DIR/arch/arm64/boot/Image.gz" ]; then
-    cp "$DIR/arch/arm64/boot/Image.gz" "$OUT_DIR/Image.gz"
+  if [ -e "$DIR/kout/arch/arm64/boot/Image.gz" ]; then
+    cp "$DIR/kout/arch/arm64/boot/Image.gz" "$OUT_DIR/Image.gz"
   fi
 
-  if [ -e "$DIR/arch/arm64/boot/Image" ]; then
-    cp "$DIR/arch/arm64/boot/Image" "$OUT_DIR/Image"
+  if [ -e "$DIR/kout/arch/arm64/boot/Image" ]; then
+    cp "$DIR/kout/arch/arm64/boot/Image" "$OUT_DIR/Image"
     echo "${BOLD_GREEN}***** Ready to flash! *****${RESET}"
     pause "continue"
   else
@@ -105,9 +105,9 @@ build_kernel() {
 
 anykernel3() {
   variant
-  if [ -e "$DIR/arch/arm64/boot/Image" ]; then
+  if [ -e "$DIR/kout/arch/arm64/boot/Image" ]; then
     cd AnyKernel3 || exit
-    cp "$DIR/arch/arm64/boot/Image" Image
+    cp "$DIR/kout/arch/arm64/boot/Image" Image
     cp "$DIR/out/dtbo.img" dtbo
     cp "$DIR/out/dtb.img" dtb
     zip -r9 "${VARIANT}_kernel_$(cat "$DIR/include/config/kernel.release")_$(date '+%Y_%m_%d').zip" * -x .git README.md *placeholder
