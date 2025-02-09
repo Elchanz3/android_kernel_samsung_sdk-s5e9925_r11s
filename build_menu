@@ -109,7 +109,6 @@ anykernel3() {
     cd AnyKernel3 || exit
     cp "$DIR/arch/arm64/boot/Image" Image
     cp "$DIR/out/dtbo.img" dtbo
-    cp "$DIR/out/dtb.img" dtb
     zip -r9 "${VARIANT}_kernel_$(cat "$DIR/include/config/kernel.release")_$(date '+%Y_%m_%d').zip" * -x .git README.md *placeholder
     cd "$DIR" || exit
     pause "continue"
