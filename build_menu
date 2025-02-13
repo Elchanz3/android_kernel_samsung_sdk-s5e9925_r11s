@@ -1,0 +1,152 @@
+#!/bin/bash
+
+set -e  # Exit on error
+
+# Variables
+export MENU_VERSION="Galaxy-S23FE_builder"
+export DIR="$(readlink -f .)"
+export OUT_DIR="$DIR/out"
+export PARENT_DIR="$(readlink -f "$DIR/..")"
+
+export CROSS_COMPILE="$PARENT_DIR/clang-r416183b/bin/aarch64-linux-gnu-"
+export CC="$PARENT_DIR/clang-r416183b/bin/clang"
+
+export PLATFORM_VERSION=12
+export ANDROID_MAJOR_VERSION=s
+export TARGET_SOC=s5e9925
+export LLVM=1
+export LLVM_IAS=1
+export ARCH=arm64
+export KERNEL_MAKE_ENV="LOCALVERSION=-v1.0"
+
+export PATH="$PARENT_DIR/clang-r416183b/bin:$PARENT_DIR/build-tools/path/linux-x86:$PARENT_DIR/gas/linux-x86:$PATH"
+
+# Colors
+BOLD_RED=$(tput bold; tput setaf 1)
+BOLD_BLUE=$(tput bold; tput setaf 4)
+BOLD_GREEN=$(tput bold; tput setaf 2)
+UNDERLINE=$(tput smul)
+RESET=$(tput sgr0)
+
+# Functions
+pause() {
+  read -rp "${BOLD_RED}$2${RESET}Press ${BOLD_BLUE}[Enter]${RESET} to $1..."
+}
+
+check_and_clone() {
+  local repo_url="$1"
+  local dest_dir="$2"
+  local description="$3"
+
+  if [ ! -d "$dest_dir" ]; then
+    pause "clone $description"
+    git clone "$repo_url" "$dest_dir"
+  fi
+}
+
+variant() {
+  local configs
+  configs=($(ls arch/arm64/configs/chanz_r11s_defconfig* 2>/dev/null))
+
+  if [ ${#configs[@]} -eq 0 ]; then
+    pause "return to main menu" "No variants found! "
+    return
+  fi
+
+  echo ""
+  echo "${BOLD_BLUE}Variant Selection:${RESET}"
+  for i in "${!configs[@]}"; do
+    echo " $((i + 1)). $(basename "${configs[i]}" | cut -d'_' -f2)"
+  done
+
+  local choice
+  read -rp "Enter choice [1 - ${#configs[@]}]: " choice
+  if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice > 0 && choice <= ${#configs[@]} )); then
+    VARIANT="$(basename "${configs[choice - 1]}" | cut -d'_' -f2)"
+    echo "Variant ${VARIANT} selected"
+    pause "continue"
+  else
+    pause "return to main menu" "Invalid option, "
+  fi
+}
+
+clean() {
+  echo "${BOLD_GREEN}***** Cleaning directories *****${RESET}"
+  make clean && make mrproper
+  rm -rf "$OUT_DIR"
+  echo "${BOLD_GREEN}***** Cleaning complete *****${RESET}"
+  pause "continue"
+}
+
+build_kernel() {
+  variant
+  echo "${BOLD_GREEN}***** Compiling kernel *****${RESET}"
+  mkdir -p "$OUT_DIR"
+
+  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV "chanz_${VARIANT}_defconfig" dtbs
+  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV
+
+  # Generate dtbo and dtb
+  ./toolchain/mkdtimg cfg_create out/dtbo.img dtconfigs/r11s.cfg -d arch/arm64/boot/dts/samsung/r11s
+  ./toolchain/mkdtimg cfg_create out/dtb.img dtconfigs/exynos2200.cfg -d arch/arm64/boot/dts/exynos
+
+  if [ -e "$DIR/arch/arm64/boot/Image.gz" ]; then
+    cp "$DIR/arch/arm64/boot/Image.gz" "$OUT_DIR/Image.gz"
+  fi
+
+  if [ -e "$DIR/arch/arm64/boot/Image" ]; then
+    cp "$DIR/arch/arm64/boot/Image" "$OUT_DIR/Image"
+    echo "${BOLD_GREEN}***** Ready to flash! *****${RESET}"
+    pause "continue"
+  else
+    pause "return to main menu" "Kernel build failed!"
+  fi
+}
+
+anykernel3() {
+  variant
+  if [ -e "$DIR/arch/arm64/boot/Image" ]; then
+    cd AnyKernel3 || exit
+    cp "$DIR/arch/arm64/boot/Image" Image
+    cp "$DIR/out/dtbo.img" dtbo
+    cp "$DIR/out/dtb.img" dtb
+    zip -r9 "${VARIANT}_kernel_$(cat "$DIR/include/config/kernel.release")_$(date '+%Y_%m_%d').zip" * -x .git README.md *placeholder
+    cd "$DIR" || exit
+    pause "continue"
+  else
+    pause "return to main menu" "Build the kernel first! "
+  fi
+}
+
+# Run dependency checks
+check_and_clone "https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b" "$PARENT_DIR/clang-r416183b" "Android Clang/LLVM"
+check_and_clone "https://android.googlesource.com/platform/prebuilts/gas/linux-x86" "$PARENT_DIR/gas/linux-x86" "GNU assembler"
+check_and_clone "https://android.googlesource.com/platform/prebuilts/build-tools" "$PARENT_DIR/build-tools" "Build tools"
+
+# Menu
+show_menus() {
+  clear
+  echo "${BOLD_BLUE} Weibo Build Menu $MENU_VERSION${RESET}"
+  echo " 1. ${UNDERLINE}Build${RESET} Kernel"
+  echo " 2. ${UNDERLINE}Clean${RESET} directories"
+  echo " 3. Create ${UNDERLINE}Flashable ZIP${RESET}"
+  echo " 4. ${UNDERLINE}Exit${RESET}"
+}
+
+read_options() {
+  local choice
+  read -rp "Enter choice [1-4]: " choice
+  case $choice in
+    1) build_kernel ;;
+    2) clean ;;
+    3) anykernel3 ;;
+    4) exit 0 ;;
+    *) pause "return to menu" "Invalid option! " ;;
+  esac
+}
+
+while true; do
+  show_menus
+  read_options
+done
+
