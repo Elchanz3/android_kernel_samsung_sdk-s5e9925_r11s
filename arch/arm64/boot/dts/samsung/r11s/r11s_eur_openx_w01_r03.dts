@@ -3841,7 +3841,7 @@
 					id = "1080x2340_60HS_120HS_TE_HW_SKIP_1";
 					width = <0x438>;
 					height = <0x924>;
-					refresh_rate = <0x41>; 
+					refresh_rate = <0x3c>;
 					refresh_mode = <0x02>;
 					panel_refresh_rate = <0x78>;
 					panel_refresh_mode = <0x01>;
@@ -3864,9 +3864,9 @@
 					id = "1080x2340_60HS";
 					width = <0x438>;
 					height = <0x924>;
-					refresh_rate = <0x41>; 
+					refresh_rate = <0x3c>;
 					refresh_mode = <0x01>;
-					panel_refresh_rate = <0x41>; 
+					panel_refresh_rate = <0x3c>;
 					panel_refresh_mode = <0x01>;
 					panel_te_st = <0x00>;
 					panel_te_ed = <0x00>;
@@ -3941,7 +3941,7 @@
 					id = "1080x2340_60HS_120HS_TE_HW_SKIP_1";
 					width = <0x438>;
 					height = <0x924>;
-					refresh_rate = <0x41>; 
+					refresh_rate = <0x3c>;
 					refresh_mode = <0x02>;
 					panel_refresh_rate = <0x78>;
 					panel_refresh_mode = <0x01>;
@@ -3964,9 +3964,9 @@
 					id = "1080x2340_60HS";
 					width = <0x438>;
 					height = <0x924>;
-					refresh_rate = <0x41>; 
+					refresh_rate = <0x3c>;
 					refresh_mode = <0x01>;
-					panel_refresh_rate = <0x41>; 
+					panel_refresh_rate = <0x3c>;
 					panel_refresh_mode = <0x01>;
 					panel_te_st = <0x00>;
 					panel_te_ed = <0x00>;

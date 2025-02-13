@@ -90,24 +90,6 @@ module_param(margin_intg3d, int, 0);
 module_param(margin_wlbt, int, 0);
 module_param(volt_offset_percent, int, 0);
 
-static ssize_t show_voltage_table(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
-{
-    unsigned int table[20];
-    int num_lv, i, len = 0;
-
-    num_lv = fvmap_get_voltage_table(ACPM_VCLK_TYPE, table);
-    if (num_lv <= 0)
-        return -EINVAL;
-
-    for (i = 0; i < num_lv; i++)
-        len += snprintf(buf + len, PAGE_SIZE - len, "Level %d: %u uV\n", i, table[i]);
-
-    return len;
-}
-
-static struct kobj_attribute voltage_table_attr = 
-    __ATTR(voltage_table, 0444, show_voltage_table, NULL);
-
 void margin_table_init(void)
 {
 	init_margin_table[MARGIN_MIF] = margin_mif;
@@ -520,21 +502,9 @@ int fvmap_init(void __iomem *sram_base)
 
 	if (sysfs_create_group(kobj, &asv_g_spec_grp))
 		pr_err("Fail to create asv_g_spec group\n");
-		
-	 kobj = kobject_create_and_add("fvmap", kernel_kobj);
-        if (!kobj)
-        return -ENOMEM;
-
-        if (sysfs_create_file(kobj, &voltage_table_attr.attr)) {
-        pr_err("Fail to create voltage_table attribute\n");
-        
-        return -EIO;
-        
-    }
 
 	return 0;
 }
-
 EXPORT_SYMBOL_GPL(fvmap_init);
 
 MODULE_LICENSE("GPL");
