@@ -8395,11 +8395,11 @@
 			devfreq_type = <0x03>;
 			devfreq_domain_name = "DISP";
 			pm_qos_class = <0x10>;
-			pm_qos_class_max = <0x12>;
+			pm_qos_class_max = <0x11>;
 			ess_flag = <0x06>;
 			dm-index = <0x07>;
 			use_delay_time = "false";
-			freq_info = <0xc3500>;
+			freq_info = <0xc3500 0xc350 0xc350 0xc350 0xc3500 0xa1dd8>;
 			governor = <0x00>;
 			dfs_id = <0xb040007>;
 			phandle = <0x2fd>;
