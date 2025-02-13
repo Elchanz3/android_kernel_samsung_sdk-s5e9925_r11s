@@ -20,3 +20,12 @@ AnyKernel3/dtbo
 AnyKernel3/Image
 *.zip
 AnyKernel3/dtb
+drivers/crypto/fmp/fipsed_sha256.c
+drivers/crypto/fmp/fipsed_hmac-sha256.c
+drivers/crypto/fmp/fipsed_fmp_test.c
+drivers/crypto/fmp/fipsed_fmp_fips_selftest.c
+drivers/crypto/fmp/fipsed_fmp_fips_main.c
+drivers/crypto/fmp/fipsed_fmp_fips_integrity.c
+drivers/crypto/fmp/fipsed_fmp_fips_cipher.c
+drivers/crypto/fmp/fipsed_fmp.c
+drivers/crypto/fmp/fips140_ic_support.c
