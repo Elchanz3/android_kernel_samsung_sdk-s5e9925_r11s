@@ -46,7 +46,7 @@ check_and_clone() {
 
 variant() {
   local configs
-  configs=($(ls arch/arm64/configs/chanz_r11s_defconfig* 2>/dev/null))
+  configs=($(ls arch/arm64/configs/exynos2200_r11s_defconfig* 2>/dev/null))
 
   if [ ${#configs[@]} -eq 0 ]; then
     pause "return to main menu" "No variants found! "
@@ -83,7 +83,7 @@ build_kernel() {
   echo "${BOLD_GREEN}***** Compiling kernel *****${RESET}"
   mkdir -p "$OUT_DIR"
 
-  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV "chanz_${VARIANT}_defconfig" dtbs
+  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV "exynos2200_${VARIANT}_defconfig" dtbs
   make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV
 
   # Generate dtbo and dtb
