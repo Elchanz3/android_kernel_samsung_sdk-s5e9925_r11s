@@ -1,123 +1,9 @@
 
-#
-# Top-level generic files
-#
 *.tmp
 *.cmd
 *.dtout
 *.d
 /.thinlto-cache
-/tags
-/TAGS
-/linux
-/modules-only.symvers
-/vmlinux
-/vmlinux.32
-/vmlinux.symvers
-/vmlinux-gdb.py
-/vmlinuz
-/System.map
-/Module.markers
-/modules.builtin.modinfo
-/modules.nsdeps
-
-#
-# RPM spec file (make rpm-pkg)
-#
-/*.spec
-
-#
-# Debian directory (make deb-pkg)
-#
-/debian/
-
-#
-# Snap directory (make snap-pkg)
-#
-/snap/
-
-#
-# tar directory (make tar*-pkg)
-#
-/tar-install/
-
-#
-# We don't want to ignore the following even if they are dot-files
-#
-!.clang-format
-!.cocciconfig
-!.get_maintainer.ignore
-!.gitattributes
-!.gitignore
-!.mailmap
-
-#
-# Generated include files
-#
-/include/config/
-/include/generated/
-/include/ksym/
-/arch/*/include/generated/
-
-# stgit generated dirs
-patches-*
-
-# quilt's files
-patches
-series
-
-# cscope files
-cscope.*
-ncscope.*
-
-# gnu global files
-GPATH
-GRTAGS
-GSYMS
-GTAGS
-
-# id-utils files
-ID
-
-*.orig
-*~
-\#*#
-
-#
-# Leavings from module signing
-#
-extra_certificates
-signing_key.pem
-signing_key.priv
-signing_key.x509
-x509.genkey
-
-# Kconfig presets
-/all.config
-/alldef.config
-/allmod.config
-/allno.config
-/allrandom.config
-/allyes.config
-
-# Kconfig savedefconfig output
-/defconfig
-
-# Kdevelop4
-*.kdev4
-
-# Clang's compilation database file
-/compile_commands.json
-
-# To create symlink file under this directory for google devices
-/arch/arm64/boot/dts/google/devices/
-
-# Documentation toolchain
-sphinx_*/
-
-# Object directory
-kout/
-
 *.lds
 *.dtbo
 /arch/arm64/boot/dts/allwinner
@@ -134,4 +20,3 @@ AnyKernel3/dtbo
 AnyKernel3/Image
 *.zip
 AnyKernel3/dtb
-
