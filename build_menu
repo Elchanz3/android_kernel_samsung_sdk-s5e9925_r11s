@@ -118,6 +118,24 @@ anykernel3() {
   fi
 }
 
+build_vendor_boot() {
+  if [ -e "$DIR/Images/vendor_boot.img" ]; then
+    cd "$DIR/Kitchen" || exit
+    cp "$DIR/Images/vendor_boot.img" vendor_boot.img
+    cp "$DIR/out/dtb.img" dtb
+    bash kitchen unpack vendor_boot.img
+    cd workspace && rm -rf dtb
+    mv dtb workspace
+    bash kitchen repack
+    mv "$DIR/Kitchen/vendor_boot.img-new(signed).img" "$OUT_DIR"
+    echo "vendor_boot done!"
+    cd "$DIR" || exit
+    read -p "Press enter to continue..."
+  else
+    read -p "Error!" "vendor_boot image not found! Press enter to continue..."
+  fi
+}
+
 # Run dependency checks
 check_and_clone "https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b" "$PARENT_DIR/clang-r416183b" "Android Clang/LLVM"
 check_and_clone "https://android.googlesource.com/platform/prebuilts/gas/linux-x86" "$PARENT_DIR/gas/linux-x86" "GNU assembler"
@@ -130,7 +148,8 @@ show_menus() {
   echo " 1. ${UNDERLINE}Build${RESET} Kernel"
   echo " 2. ${UNDERLINE}Clean${RESET} directories"
   echo " 3. Create ${UNDERLINE}Flashable ZIP${RESET}"
-  echo " 4. ${UNDERLINE}Exit${RESET}"
+   echo " 4. Generate ${UNDERLINE}Vendor_boot image${RESET}"
+  echo " 5. ${UNDERLINE}Exit${RESET}"
 }
 
 read_options() {
@@ -140,7 +159,8 @@ read_options() {
     1) build_kernel ;;
     2) clean ;;
     3) anykernel3 ;;
-    4) exit 0 ;;
+    4) build_vendor_boot ;;
+    5) exit 0 ;;
     *) pause "return to menu" "Invalid option! " ;;
   esac
 }
