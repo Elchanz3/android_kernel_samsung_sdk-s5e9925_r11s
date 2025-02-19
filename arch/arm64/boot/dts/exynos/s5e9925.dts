@@ -6552,15 +6552,15 @@
 			cal-id = <0xb040002>;
 			dm-type = <0x00>;
 			dss-type = <0x00>;
-			max-freq = <1824000>;
+			max-freq = <2002000>;
 			min-freq = <400000>;
-			pm_qos-booting = <1728000>;
+			pm_qos-booting = <2002000>;
 			fast-switch;
 			thread-run-on = "0-5";
 			#cooling-cells = <0x02>;
 			ect-coeff-index = <0x02>;
 			tz-cooling-name = "LITTLE";
-			freq-table = <400000 576000 672000 768000 864000 960000 1056000 1152000 1248000 1344000 1440000 1536000 1632000 1728000 1824000>;
+			freq-table = <400000 576000 672000 768000 864000 960000 1056000 1152000 1248000 1344000 1440000 1536000 1632000 1728000 1824000 2002000>;
 			phandle = <0x11e>;
 
 			dm-constraints {
@@ -6618,7 +6618,7 @@
 			master-cal-id = <0xb040002>;
 			slave-cal-id = <0xb040006>;
 			multi-table;
-			table = <400000 240000 576000 384000 672000 432000 768000 528000 864000 576000 960000 624000 1056000 720000 1152000 768000 1248000 816000 1344000 912000 1440000 960000 1536000 1008000 1632000 1080000 1728000 1152000 1824000 1824000>;
+			table = <400000 240000 576000 384000 672000 432000 768000 528000 864000 576000 960000 624000 1056000 720000 1152000 768000 1248000 816000 1344000 912000 1440000 960000 1536000 1008000 1632000 1080000 1728000 1152000 1824000 1824000 2002000 2002000>;
 			phandle = <0xcd>;
 		};
 
@@ -6628,7 +6628,7 @@
 			master-cal-id = <0xb040002>;
 			slave-cal-id = <0xb040006>;
 			multi-table;
-			table = <400000 200000 576000 288000 672000 336000 768000 384000 864000 432000 960000 480000 1056000 528000 1152000 576000 1248000 624000 1344000 672000 1440000 720000 1536000 768000 1632000 1080000 1728000 1152000 1824000 1200000>;
+			table = <400000 200000 576000 288000 672000 336000 768000 384000 864000 432000 960000 480000 1056000 528000 1152000 576000 1248000 624000 1344000 672000 1440000 720000 1536000 768000 1632000 1080000 1728000 1152000 1824000 1200000 2002000 1200000>;
 			phandle = <0xce>;
 		};
 
@@ -6678,7 +6678,7 @@
 			master-cal-id = <0xb040002>;
 			slave-cal-id = <0xb040000>;
 			dynamic-disable;
-			table = <400000 0 576000 0 672000 0 768000 0 864000 0 960000 0 1056000 0 1152000 0 1248000 0 1344000 0 1440000 0 1536000 0 1632000 0 1728000 0 1824000 0>;
+			table = <400000 0 576000 0 672000 0 768000 0 864000 0 960000 0 1056000 0 1152000 0 1248000 0 1344000 0 1440000 0 1536000 0 1632000 0 1728000 0 1824000 0 2002000 0>;
 			phandle = <0xcf>;
 		};
 
@@ -6771,7 +6771,7 @@
 				device_type = "ufc-domain";
 				shared-cpus = "0-3";
 				table-col-idx = <0x03>;
-				hold-freq = <0x1a5e00>;
+				allow-disable-cpus;
 			};
 
 			domain@1 {
@@ -6839,7 +6839,7 @@
 			s2mps-afm-offset = <0x80>;
 			htu-base-addr = <0x1d090000>;
 			down-step = <0x01>;
-			max-freq-wo-afm = <0x1e8c50>;
+			max-freq-wo-afm = <2496008>;
 			release-duration = <0x0f>;
 			phandle = <0x2dd>;
 		};
@@ -6853,7 +6853,7 @@
 			s2mps-afm-offset = <0x80>;
 			htu-base-addr = <0x1d0a0000>;
 			down-step = <0x01>;
-			max-freq-wo-afm = <2002000>;
+			max-freq-wo-afm = <2784008>;
 			release-duration = <0x0f>;
 			phandle = <0x2de>;
 		};
@@ -15098,8 +15098,8 @@
 			up-step = <0x02>;
 			down-step = <0x05>;
 			default-step = <0x0a>;
-			pm-qos-min-freq = <0x00>;
-			pm-qos-max-freq = <0x148200>;
+			pm-qos-min-freq = <400000>;
+			pm-qos-max-freq = <2002000>;
 			hp-minlock-low-limit = <0x1e8c50>;
 			lp-minlock-low-limit = <0x00>;
 			pid-util-max = <0x320>;
@@ -15115,7 +15115,8 @@
 			up-step = <0x02>;
 			down-step = <0x05>;
 			default-step = <0x0a>;
-			pm-qos-max-freq = "\0#(";
+			pm-qos-min-freq = <576000>;
+			pm-qos-max-freq = <2496008>;
 			hp-minlock-low-limit = <0x1e26c0>;
 			lp-minlock-low-limit = <0x00>;
 			pid-util-max = <0x320>;
@@ -15131,7 +15132,8 @@
 			up-step = <0x02>;
 			down-step = <0x05>;
 			default-step = <0x0a>;
-			pm-qos-max-freq = "\0#(";
+			pm-qos-min-freq = <576000>;
+			pm-qos-max-freq = <2784008>;
 			hp-minlock-low-limit = <0x1e26c0>;
 			lp-minlock-low-limit = <0x00>;
 			pid-util-max = <0x384>;
@@ -15148,8 +15150,8 @@
 			down-step = <0x05>;
 			default-step = <0x02>;
 			pm-qos-max-class = <0x1b>;
-			pm-qos-max-freq = <0xe7b08>;
-			pm-qos-min-freq = <0x00>;
+			pm-qos-max-freq = <1306000>;
+			pm-qos-min-freq = <303000>;
 			q0-empty-pct-thr = <0x00>;
 			q1-empty-pct-thr = <0x00>;
 			active-pct-thr = <0x64>;
@@ -15164,8 +15166,8 @@
 			default-step = <0x0a>;
 			pm-qos-max-class = <0x0f>;
 			freq-stats0-mode-min-freq = <0x1a2f20>;
-			pm-qos-max-freq = <0x3066a0>;
-			pm-qos-min-freq = <0xce4c8>;
+			pm-qos-max-freq = <3172000>;
+			pm-qos-min-freq = <845000>;
 			freq-stats0-thr = <0x1194>;
 			freq-stats0-updown-delta-pct-thr = <0xc8>;
 			hp-minlock-low-limit = <0x29a810>;
