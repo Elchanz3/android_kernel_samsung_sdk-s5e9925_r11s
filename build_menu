@@ -8,8 +8,8 @@ export DIR="$(readlink -f .)"
 export OUT_DIR="$DIR/out"
 export PARENT_DIR="$(readlink -f "$DIR/..")"
 
-export CROSS_COMPILE="/home/chanz22/tc/proton-12/bin/aarch64-linux-gnu-"
-export CC="/home/chanz22/tc/proton-12/bin/clang"
+export CROSS_COMPILE="$PARENT_DIR/clang-r416183b/bin/aarch64-linux-gnu-"
+export CC="$PARENT_DIR/clang-r416183b/bin/clang"
 
 export PLATFORM_VERSION=12
 export ANDROID_MAJOR_VERSION=s
@@ -19,7 +19,7 @@ export LLVM_IAS=1
 export ARCH=arm64
 export KERNEL_MAKE_ENV="LOCALVERSION=-v1.0"
 
-export PATH="/home/chanz22/tc/proton-12/bin:$PARENT_DIR/build-tools/path/linux-x86:$PARENT_DIR/gas/linux-x86:$PATH"
+export PATH="$PARENT_DIR/clang-r416183b/bin:$PARENT_DIR/build-tools/path/linux-x86:$PARENT_DIR/gas/linux-x86:$PATH"
 
 # Colors
 BOLD_RED=$(tput bold; tput setaf 1)
