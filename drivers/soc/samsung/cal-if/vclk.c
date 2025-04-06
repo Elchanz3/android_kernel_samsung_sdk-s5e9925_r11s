@@ -250,7 +250,7 @@ unsigned long vclk_recalc_rate(unsigned int id)
 
 		if (i == vclk->num_rates) {
 			vclk->vrate = 0;
-			pr_debug("%s:%x failed\n", __func__, id);
+			pr_info("%s:%x failed\n", __func__, id);
 		}
 	} else {
 		vclk->vrate = ra_recalc_rate(vclk->list[0]);
@@ -439,7 +439,7 @@ static int vclk_get_dfs_info(struct vclk *vclk)
 	unsigned int *minmax_table = NULL;
 	int *params, idx;
 	int ret = 0;
-	char buf[32];
+	char buf[256];
 
 	dvfs_block = ect_get_block("DVFS");
 	if (dvfs_block == NULL)
@@ -471,7 +471,7 @@ static int vclk_get_dfs_info(struct vclk *vclk)
 		vclk->min_freq = minmax_table[MINMAX_MIN_FREQ] * 1000;
 		vclk->max_freq = minmax_table[MINMAX_MAX_FREQ] * 1000;
 	}
-	pr_debug("ACPM_DVFS :%s\n", vclk->name);
+	pr_info("ACPM_DVFS:%s\n", vclk->name);
 
 	vclk->list = kzalloc(sizeof(unsigned int) * vclk->num_list, GFP_KERNEL);
 	if (!vclk->list)
@@ -485,7 +485,10 @@ static int vclk_get_dfs_info(struct vclk *vclk)
 	}
 
 	for (i = 0; i < vclk->num_rates; i++) {
+	        int len = 0;
+	        
 		vclk->lut[i].rate = dvfs_domain->list_level[i].level;
+		pr_info("	rate: %d\n", vclk->lut[i].rate);
 		params = kcalloc(vclk->num_list, sizeof(int), GFP_KERNEL);
 		if (!params) {
 			ret = -EVCLKNOMEM;
@@ -495,11 +498,14 @@ static int vclk_get_dfs_info(struct vclk *vclk)
 				kfree(vclk->lut[i].params);
 			goto err_nomem2;
 		}
-
+		
+		len += sprintf(buf, "	params:");
 		for (j = 0; j < vclk->num_list; ++j) {
 			idx = i * vclk->num_list + j;
 			params[j] = dvfs_domain->list_dvfs_value[idx];
+			len += sprintf(buf + len, " %d", params[j]);
 		}
+		pr_info("%s\n", buf);
 		vclk->lut[i].params = params;
 	}
 	vclk->boot_freq = 0;
@@ -597,6 +603,7 @@ static int vclk_get_asv_info(struct vclk *vclk)
 	gen_block = ect_get_block("GEN");
 	if (gen_block) {
 		sprintf(buf, "M%s", vclk->name);
+		pr_info("%s\n", buf);
 		minmax = ect_gen_param_get_table(gen_block, buf);
 		if (minmax != NULL)
 			goto minmax_skip;
@@ -627,12 +634,12 @@ static int vclk_get_asv_info(struct vclk *vclk)
 		vclk->resume_freq = -1;
 
 minmax_skip:
-	pr_debug("   num_rates    : %7d\n", vclk->num_rates);
-	pr_debug("   num_clk_list : %7d\n", vclk->num_list);
-	pr_debug("   max_freq     : %7d\n", vclk->max_freq);
-	pr_debug("   min_freq     : %7d\n", vclk->min_freq);
-	pr_debug("   boot_freq    : %7d\n", vclk->boot_freq);
-	pr_debug("   resume_freq  : %7d\n", vclk->resume_freq);
+	pr_info("   num_rates    : %7d\n", vclk->num_rates);
+	pr_info("   num_clk_list : %7d\n", vclk->num_list);
+	pr_info("   max_freq     : %7d\n", vclk->max_freq);
+	pr_info("   min_freq     : %7d\n", vclk->min_freq);
+	pr_info("   boot_freq    : %7d\n", vclk->boot_freq);
+	pr_info("   resume_freq  : %7d\n", vclk->resume_freq);
 
 	return ret;
 }
