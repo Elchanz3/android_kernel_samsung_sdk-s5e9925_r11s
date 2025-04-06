@@ -32,7 +32,7 @@ do { \
 		npu_err(fmt, ##__VA_ARGS__); \
 		return ret; \
 	} \
-} while(0)
+} while (0)
 
 struct npu_util_bitmap {
 	char				name[NPU_BITMAP_NAME_LEN];

@@ -3793,8 +3793,8 @@
 		user4 {
 			label = "green:user4";
 			gpios = <0x8d 0x0a 0x00>;
-			linux,default-trigger = "panic-indicator";
 			default-state = "off";
+			panic-indicator;
 		};
 
 		wlan {

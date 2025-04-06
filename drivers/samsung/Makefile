@@ -12,6 +12,3 @@ obj-$(CONFIG_DRV_SAMSUNG)	+= sec_class.o
 obj-$(CONFIG_SEC_BOOTSTAT)	+= sec_bootstat.o
 obj-$(CONFIG_SEC_RELOC_GPIO)	+= sec_reloc_gpio.o
 obj-$(CONFIG_ARGOS)		+= sec_argos.o
-
-obj-y				+= knox/
-

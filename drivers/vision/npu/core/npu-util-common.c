@@ -162,7 +162,7 @@ static inline int validate_ncp_offset_range(u32 offset, u32 size, u32 cnt, size_
 {
 	size_t start = offset, end = start + size * cnt;
 
-	if (!start || !cnt || !size) /* Redundant entry. Ignore. */ \
+	if (!start || !cnt || !size) /* Redundant entry. Ignore. */
 		return 0;
 
 	if (end > ncp_size)

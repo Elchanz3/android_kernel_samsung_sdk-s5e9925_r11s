@@ -138,7 +138,6 @@ config USB_HOST_CERTI
 config DISABLE_LOCKSCREEN_USB_RESTRICTION
 	bool "disable usb restriction during lockscreen"
 	depends on USB_NOTIFY_LAYER
-	default y
 	help
 	 Restricting the usb function on the lock screen is a concept applied for usb security
 	 it has been applied since v os (oneui 7.0) or higher

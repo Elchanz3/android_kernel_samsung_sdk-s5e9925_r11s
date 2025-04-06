@@ -567,9 +567,12 @@ void dp_mode_filter_out(struct dp_device *dp, int mode_num)
 
 #ifdef FEATURE_DEX_SUPPORT
 #ifdef FEATURE_MANAGE_HMD_LIST
+	mutex_lock(&dp->hmd_lock);
 	if (dp->is_hmd_dev)
 		is_dex = false;
-	else
+	else if (dp->dex.ui_setting)
+		is_dex = true;
+	mutex_unlock(&dp->hmd_lock);
 #endif
 	if (dp->dex.ui_setting)
 		is_dex = true;

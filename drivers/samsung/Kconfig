@@ -113,5 +113,4 @@ config SEC_RELOC_GPIO
 endmenu
 source "drivers/samsung/misc/Kconfig"
 source "drivers/samsung/pm/Kconfig"
-source "drivers/samsung/knox/Kconfig"
 

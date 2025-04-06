@@ -564,7 +564,7 @@ int npu_memory_alloc_cached(struct npu_memory *memory, struct npu_memory_buffer 
 {
 	struct dma_buf *dma_buf;
 	unsigned int flag = 0;
-	size_t size = buffer->size;;
+	size_t size = buffer->size;
 
 	if (!buffer->size)
 		return 0; /* Nothing to do. */

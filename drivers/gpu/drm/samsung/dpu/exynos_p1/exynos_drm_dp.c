@@ -751,12 +751,14 @@ Reduce_Link_Rate_Retry:
 	dp_reg_dpcd_write(&dp->cal_res, DPCD_ADD_TRANING_PATTERN_SET, 1, val);
 
 #ifdef FEATURE_MANAGE_HMD_LIST
+	mutex_lock(&dp->hmd_lock);
 	if (dp->is_hmd_dev &&
 		!strncmp(dp->sink_info.monitor_name, "PicoVR", MON_NAME_LEN)) {
 		dp_info(dp, "increase swing level\n");
 		for (i = 0; i < 4; i++)
 			drive_current[i] = MAX_REACHED_CNT - 1;
 	}
+	mutex_unlock(&dp->hmd_lock);
 #endif
 Voltage_Swing_Retry:
 	dp_debug(dp, "Voltage_Swing_Retry\n");
@@ -2446,6 +2448,9 @@ int dp_dpcd_read_for_hdcp22(u32 address, u32 length, u8 *data)
 	struct dp_device *dp = get_dp_drvdata();
 	int ret;
 
+	if (dp->state == DP_STATE_OFF)
+		return -EPERM;
+
 	ret = dp_reg_dpcd_read_burst(&dp->cal_res, address, length, data);
 
 	if (ret != 0)
@@ -2458,6 +2463,9 @@ int dp_dpcd_write_for_hdcp22(u32 address, u32 length, u8 *data)
 {
 	struct dp_device *dp = get_dp_drvdata();
 	int ret;
+
+	if (dp->state == DP_STATE_OFF)
+		return -EPERM;
 
 	ret = dp_reg_dpcd_write_burst(&dp->cal_res, address, length, data);
 

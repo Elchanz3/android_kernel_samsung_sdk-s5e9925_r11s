@@ -52,6 +52,10 @@
 #include <linux/usb/f_ss_mon_gadget.h>
 #endif
 
+#if IS_ENABLED(CONFIG_USB_NOTIFY_LAYER)
+#include <linux/usb_notify.h>
+#endif
+
 #define OTG_NO_CONNECT		0
 #define OTG_CONNECT_ONLY	1
 #define OTG_DEVICE_CONNECT	2
@@ -537,6 +541,7 @@ static int dwc3_otg_start_host(struct otg_fsm *fsm, int on)
 
 		dwc3_otg_set_host_mode(dotg);
 
+		dwc3_core_susphy_set(dwc, 1);
 		exynos->usb_host_ready = true;
 
 		ret = platform_device_add(dwc->xhci);
@@ -1055,6 +1060,11 @@ dwc3_otg_store_b_sess(struct device *dev,
 	if (sscanf(buf, "%d", &b_sess_vld) != 1)
 		return -EINVAL;
 
+#if IS_ENABLED(CONFIG_USB_NOTIFY_LAYER)
+	if (is_blocked(get_otg_notify(), NOTIFY_BLOCK_TYPE_CLIENT))
+		return -EINVAL;
+#endif
+
 	fsm->b_sess_vld = !!b_sess_vld;
 
 	dwc3_otg_run_sm(fsm);
@@ -1085,6 +1095,11 @@ dwc3_otg_store_id(struct device *dev,
 
 	if (sscanf(buf, "%d", &id) != 1)
 		return -EINVAL;
+
+#if IS_ENABLED(CONFIG_USB_NOTIFY_LAYER)
+	if (is_blocked(get_otg_notify(), NOTIFY_BLOCK_TYPE_HOST))
+		return -EINVAL;
+#endif
 
 	fsm->id = !!id;
 
