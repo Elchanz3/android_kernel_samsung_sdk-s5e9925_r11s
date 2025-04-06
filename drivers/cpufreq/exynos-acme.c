@@ -407,14 +407,10 @@ static int __exynos_cpufreq_target(struct cpufreq_policy *policy,
 		goto out;
 	}
 
-#define TEN_MHZ (10000)
 	if (!domain->fast_switch_possible
-	    && abs(domain->old - get_freq(domain)) > TEN_MHZ) {
+	    && abs(domain->old - get_freq(domain)) > TEN_MHZ)
 		pr_err("oops, inconsistency between domain->old:%d, real clk:%d\n",
 			domain->old, get_freq(domain));
-//		BUG_ON(1);
-	}
-#undef TEN_MHZ
 
 	ret = scale(domain, policy, target_freq);
 	if (ret)
@@ -1427,6 +1423,9 @@ static int exynos_cpufreq_cpu_down_callback(unsigned int cpu)
 /*********************************************************************
  *                  INITIALIZE EXYNOS CPUFREQ DRIVER                 *
  *********************************************************************/
+ 
+ static int cpu_undervolt = 25000;
+ 
 static void print_domain_info(struct exynos_cpufreq_domain *domain)
 {
 	int i;
@@ -1850,6 +1849,10 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 		domain->freq_table[index].frequency = fv_table[index].freq;
 	}
 	domain->freq_table[index].driver_data = index;
+	
+	/* Undervolt with uV value */
+ 	volt_table[index] -= cpu_undervolt;
+	
 	domain->freq_table[index].frequency = CPUFREQ_TABLE_END;
 
 	/*
