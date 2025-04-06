@@ -70,6 +70,7 @@ struct exynos_cpufreq_domain {
 	struct freq_qos_request		max_qos_req;
 	struct freq_qos_request		user_min_qos_req;
 	struct freq_qos_request		user_max_qos_req;
+	unsigned int			user_default_qos;
 	struct delayed_work		work;
 
 	/* fops node */
@@ -103,4 +104,4 @@ struct exynos_cpufreq_domain {
  * the time it takes on this CPU to switch between
  * two frequencies in nanoseconds
  */
-#define TRANSITION_LATENCY	5000000
+#define TRANSITION_LATENCY	4500000

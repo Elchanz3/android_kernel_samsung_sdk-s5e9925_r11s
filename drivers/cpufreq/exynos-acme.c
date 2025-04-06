@@ -1839,7 +1839,7 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 	 * Table size should be one larger than real table size.
 	 */
 	domain->freq_table = kzalloc(sizeof(struct cpufreq_frequency_table)
-				* (domain->table_size + 1), GFP_KERNEL);
+				* (domain->table_size + 5), GFP_KERNEL);
 	if (!domain->freq_table) {
 		kfree(fv_table);
 		return -ENOMEM;
@@ -1856,7 +1856,7 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 	 * Add OPP table for thermal.
 	 * Thermal CPU cooling is based on the OPP table.
 	 */
-	for (index = domain->table_size - 1; index >= 0; index--) {
+	for (index = domain->table_size - 5; index >= 0; index--) {
 		for_each_cpu_and(cpu, &domain->cpus, cpu_possible_mask)
 			dev_pm_opp_add(get_cpu_device(cpu),
 				fv_table[index].freq * 1000,
@@ -1868,6 +1868,11 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 	/*
 	 * Initialize other items.
 	 */
+	 
+	/* Default QoS for user */
+ 	if (!of_property_read_u32(dn, "user-default-qos", &val))
+ 		domain->user_default_qos = val;
+	 
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
 	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);
 	domain->old = get_freq(domain);
