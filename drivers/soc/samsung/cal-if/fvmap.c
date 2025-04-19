@@ -296,7 +296,7 @@ unsigned int dvfs_calibrate_voltage(unsigned int rate_target, unsigned int rate_
 	unsigned int rate_per_step;
 	unsigned int ret;
 
-	if (rate_up < 0x100)
+	if (rate_up < 0x115)
 		return volt_down * STEP_UV;
 
 	if (rate_down == 0)
