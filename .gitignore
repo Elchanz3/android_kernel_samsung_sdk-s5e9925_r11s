@@ -61611,3 +61611,6 @@ arch/arm64/include/generated/asm/set_memory.h
 arch/arm64/include/generated/asm/switch_to.h
 arch/arm64/include/generated/asm/trace_clock.h
 arch/arm64/include/generated/asm/unaligned.h
+/out
+/magiskboot
+out/vendor_boot.img
