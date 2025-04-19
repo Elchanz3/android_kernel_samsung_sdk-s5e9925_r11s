@@ -407,11 +407,6 @@ static int __exynos_cpufreq_target(struct cpufreq_policy *policy,
 		goto out;
 	}
 
-	if (!domain->fast_switch_possible
-	    && abs(domain->old - get_freq(domain)) > TEN_MHZ)
-		pr_err("oops, inconsistency between domain->old:%d, real clk:%d\n",
-			domain->old, get_freq(domain));
-
 	ret = scale(domain, policy, target_freq);
 	if (ret)
 		goto out;
