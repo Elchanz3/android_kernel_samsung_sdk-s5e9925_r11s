@@ -120,16 +120,15 @@ anykernel3() {
 
 build_vendor_boot() {
   if [ -e "$DIR/Images/vendor_boot.img" ]; then
-    cd "$DIR/Kitchen" || exit
+    cd "$DIR/magiskboot" || exit
     cp "$DIR/Images/vendor_boot.img" vendor_boot.img
+    ./magiskboot unpack vendor_boot.img
+    rm -rf dtb
     cp "$DIR/out/dtb.img" dtb
-    bash kitchen unpack vendor_boot.img
-    cd workspace && rm -rf dtb
-    cd ../
-    mv dtb workspace
-    bash kitchen repack
-    mv "$DIR/Kitchen/vendor_boot.img-new(signed).img" "$OUT_DIR"
+    ./magiskboot repack vendor_boot.img
+    mv "$DIR/magiskboot/new-boot.img" "$OUT_DIR/vendor_boot.img"
     echo "vendor_boot done!"
+    ./magiskboot cleanup
     cd "$DIR" || exit
     read -p "Press enter to continue..."
   else
