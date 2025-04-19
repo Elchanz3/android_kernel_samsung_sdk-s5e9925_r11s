@@ -19,6 +19,7 @@
 #include <linux/compiler.h>
 #include <linux/rbtree.h>
 #include <linux/sbitmap.h>
+#include <linux/atomic.h>
 
 #include "blk.h"
 #include "blk-mq.h"
@@ -39,8 +40,8 @@ extern void blk_sec_stats_account_io_done(
 #define blk_sec_stats_account_io_done(rq, size, tgid, name, time) do {} while(0)
 #endif
 
-#define atomic_inc_return_relaxed(v) \
-    __atomic_add_fetch(&(v->counter), 1, __ATOMIC_RELAXED)
+#define SSG_ATOMIC_INC_RELAXED(v) \
+    __atomic_add_fetch(&((v)->counter), 1, __ATOMIC_RELAXED)
     
 #ifndef ____cacheline_aligned
 #define ____cacheline_aligned __attribute__((__aligned__(64)))
@@ -106,7 +107,7 @@ struct ssg_data {
 	spinlock_t lock;
 	spinlock_t zone_lock;
 	struct list_head dispatch;
-}; ____cacheline_aligned;
+} __aligned(64);
 
 static inline struct rb_root *ssg_rb_root(struct ssg_data *ssg, struct request *rq)
 {
@@ -363,7 +364,7 @@ static struct request *__ssg_dispatch_request(struct ssg_data *ssg)
 		BUG_ON(RB_EMPTY_ROOT(&ssg->sort_list[READ]));
 
 		if (ssg_fifo_request(ssg, WRITE) &&
-                    (atomic_inc_return_relaxed(&ssg->starved_writes) >= ssg->max_write_starvation))
+                    (SSG_ATOMIC_INC_RELAXED(&ssg->starved_writes) >= ssg->max_write_starvation))
 			goto dispatch_writes;
 
 		data_dir = READ;

@@ -1,21 +1,25 @@
 /* SPDX-License-Identifier: GPL-2.0 */
+
 #ifndef SSG_CGROUP_H
 #define SSG_CGROUP_H
 #include <linux/blk-cgroup.h>
+#include <linux/atomic.h>
 
 #if IS_ENABLED(CONFIG_MQ_IOSCHED_SSG_CGROUP)
-struct ssg_blkcg {
-	struct blkcg_policy_data cpd __aligned(64); /* must be the first member */
 
-	int max_available_ratio;
+#define SSG_ATOMIC_ADD_RELAXED(v, i) \
+    __atomic_add_fetch(&((v)->counter), (i), __ATOMIC_RELAXED)
+
+struct ssg_blkcg {
+        struct blkcg_policy_data cpd __aligned(64); // Sintaxe corrigida
+        int max_available_ratio;
 };
 
 struct ssg_blkg {
-	struct blkg_policy_data pd __aligned(64) /* must be the first member */
-
-	atomic_t current_rqs;
-	int max_available_rqs;
-	unsigned int shallow_depth; /* shallow depth for each tag map to get sched tag */
+        struct blkg_policy_data pd __aligned(64); // Sintaxe corrigida
+        atomic_t current_rqs;
+        int max_available_rqs;
+        unsigned int shallow_depth;
 };
 
 extern int ssg_blkcg_init(void);
@@ -60,6 +64,7 @@ void ssg_blkcg_inc_rq(struct blkcg_gq *blkg)
 void ssg_blkcg_dec_rq(struct blkcg_gq *blkg)
 {
 }
+
 #endif
 
 #endif
