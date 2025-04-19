@@ -1424,7 +1424,7 @@ static int exynos_cpufreq_cpu_down_callback(unsigned int cpu)
  *                  INITIALIZE EXYNOS CPUFREQ DRIVER                 *
  *********************************************************************/
  
- static int cpu_undervolt = 25000;
+ static int cpu_undervolt = 60000;
  
 static void print_domain_info(struct exynos_cpufreq_domain *domain)
 {
@@ -1851,7 +1851,7 @@ static int init_domain(struct exynos_cpufreq_domain *domain,
 	domain->freq_table[index].driver_data = index;
 	
 	/* Undervolt with uV value */
- 	volt_table[index] -= cpu_undervolt;
+ 	fv_table[index].volt -= cpu_undervolt;
 	
 	domain->freq_table[index].frequency = CPUFREQ_TABLE_END;
 
