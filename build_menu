@@ -3,7 +3,7 @@
 set -e  # Exit on error
 
 # Variables
-export MENU_VERSION="Galaxy-S23FE_builder"
+export MENU_VERSION="S23FE_builder"
 export DIR="$(readlink -f .)"
 export OUT_DIR="$DIR/out"
 export PARENT_DIR="$(readlink -f "$DIR/..")"
@@ -125,6 +125,7 @@ build_vendor_boot() {
     cp "$DIR/out/dtb.img" dtb
     bash kitchen unpack vendor_boot.img
     cd workspace && rm -rf dtb
+    cd ../
     mv dtb workspace
     bash kitchen repack
     mv "$DIR/Kitchen/vendor_boot.img-new(signed).img" "$OUT_DIR"
