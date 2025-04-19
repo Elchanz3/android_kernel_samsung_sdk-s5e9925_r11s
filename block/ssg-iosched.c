@@ -39,6 +39,13 @@ extern void blk_sec_stats_account_io_done(
 #define blk_sec_stats_account_io_done(rq, size, tgid, name, time) do {} while(0)
 #endif
 
+#define atomic_inc_return_relaxed(v) \
+    __atomic_add_fetch(&(v->counter), 1, __ATOMIC_RELAXED)
+    
+#ifndef ____cacheline_aligned
+#define ____cacheline_aligned __attribute__((__aligned__(64)))
+#endif
+
 #define MAX_ASYNC_WRITE_RQS	8
 
 static const int read_expire = HZ / 2;		/* max time before a read is submitted. */
@@ -71,7 +78,7 @@ struct ssg_data {
 	 * next in sort order. read, write or both are NULL
 	 */
 	struct request *next_rq[2];
-	unsigned int starved_writes;	/* times reads have starved writes */
+	atomic_t starved_writes __aligned(64);  // Alignment for the L1 cache
 
 	/*
 	 * settings that change how the i/o scheduler behaves
@@ -83,7 +90,7 @@ struct ssg_data {
 	/*
 	 * to control request allocation
 	 */
-	atomic_t allocated_rqs;
+	atomic_t allocated_rqs __aligned(64);
 	atomic_t async_write_rqs;
 	int congestion_threshold_rqs;
 	int max_tgroup_rqs;
@@ -99,7 +106,7 @@ struct ssg_data {
 	spinlock_t lock;
 	spinlock_t zone_lock;
 	struct list_head dispatch;
-};
+}; ____cacheline_aligned;
 
 static inline struct rb_root *ssg_rb_root(struct ssg_data *ssg, struct request *rq)
 {
@@ -356,7 +363,7 @@ static struct request *__ssg_dispatch_request(struct ssg_data *ssg)
 		BUG_ON(RB_EMPTY_ROOT(&ssg->sort_list[READ]));
 
 		if (ssg_fifo_request(ssg, WRITE) &&
-		    (ssg->starved_writes++ >= ssg->max_write_starvation))
+                    (atomic_inc_return_relaxed(&ssg->starved_writes) >= ssg->max_write_starvation))
 			goto dispatch_writes;
 
 		data_dir = READ;
@@ -372,7 +379,7 @@ static struct request *__ssg_dispatch_request(struct ssg_data *ssg)
 dispatch_writes:
 		BUG_ON(RB_EMPTY_ROOT(&ssg->sort_list[WRITE]));
 
-		ssg->starved_writes = 0;
+		atomic_set(&ssg->starved_writes, 0);
 
 		data_dir = WRITE;
 
@@ -734,7 +741,7 @@ static void ssg_prepare_request(struct request *rq)
 	struct ssg_data *ssg = rq->q->elevator->elevator_data;
 	struct ssg_request_info *rqi;
 
-	atomic_inc(&ssg->allocated_rqs);
+	atomic_add_unless(&ssg->allocated_rqs, 1, ssg->congestion_threshold_rqs);
 
 	rqi = ssg_rq_info(ssg, rq);
 	if (likely(rqi)) {

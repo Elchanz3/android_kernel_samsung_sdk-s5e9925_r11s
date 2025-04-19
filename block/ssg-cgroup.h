@@ -5,13 +5,13 @@
 
 #if IS_ENABLED(CONFIG_MQ_IOSCHED_SSG_CGROUP)
 struct ssg_blkcg {
-	struct blkcg_policy_data cpd; /* must be the first member */
+	struct blkcg_policy_data cpd __aligned(64); /* must be the first member */
 
 	int max_available_ratio;
 };
 
 struct ssg_blkg {
-	struct blkg_policy_data pd; /* must be the first member */
+	struct blkg_policy_data pd __aligned(64) /* must be the first member */
 
 	atomic_t current_rqs;
 	int max_available_rqs;

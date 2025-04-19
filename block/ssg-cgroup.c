@@ -261,3 +261,36 @@ void ssg_blkcg_exit(void)
 {
 	blkcg_policy_unregister(&ssg_blkcg_policy);
 }
+
+struct ssg_blkcg {
+    struct blkcg_policy_data cpd __aligned(64);
+    int max_available_ratio;
+};
+
+struct ssg_blkg {
+    struct blkg_policy_data pd __aligned(64);
+    
+    atomic_t current_rqs;
+    unsigned int max_available_rqs;
+    unsigned int shallow_depth;
+};
+
+void ssg_blkcg_inc_rq(struct blkcg_gq *blkg)
+{
+    struct ssg_blkg *ssg_blkg = BLKG_TO_SSG_BLKG(blkg);
+    
+    if (IS_ERR_OR_NULL(ssg_blkg))
+        return;
+    
+    atomic_add_relaxed(1, &ssg_blkg->current_rqs);
+}
+
+void ssg_blkcg_dec_rq(struct blkcg_gq *blkg)
+{
+    struct ssg_blkg *ssg_blkg = BLKG_TO_SSG_BLKG(blkg);
+    
+    if (IS_ERR_OR_NULL(ssg_blkg))
+        return;
+    
+    atomic_sub_relaxed(1, &ssg_blkg->current_rqs);
+}
