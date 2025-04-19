@@ -517,25 +517,25 @@ static bool ego_should_update_freq(struct ego_policy *egp, u64 time)
 	 * going offline from leaving stale IRQ work items behind.
 	 */
 	if (!cpufreq_this_cpu_can_update(egp->policy))
-		return false;
+                 return false;
 
-	if (unlikely(egp->limits_changed)) {
-		egp->limits_changed = false;
-		egp->need_freq_update = true;
-		return true;
-	}
+	 if (unlikely(egp->limits_changed)) {
+                 egp->limits_changed = false;
+                 egp->need_freq_update = true;
+                 return true;
+                 }
 
-	delta_ns = time - egp->last_freq_update_time;
+	 delta_ns = time - egp->last_freq_update_time;
 
 	/*
 	 * EGO doesn't know target frequency at this point, so consider
 	 * the minimum value between up/down rate limit to cover all cases.
 	 * The exact rate limit will be considered in ego_postpone_freq_update().
 	 */
-	rate_limit_ns = egp->up_rate_limit_ns < egp->down_rate_limit_ns ? 
-                egp->up_rate_limit_ns : egp->down_rate_limit_ns;
+         rate_limit_ns = egp->up_rate_limit_ns < egp->down_rate_limit_ns ? 
+              egp->up_rate_limit_ns : egp->down_rate_limit_ns;
 
-	return delta_ns >= rate_limit_ns;
+         return delta_ns >= rate_limit_ns;
 }
 
 static void ego_update_pelt_margin(struct ego_policy *egp, u64 time,
