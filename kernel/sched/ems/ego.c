@@ -532,7 +532,8 @@ static bool ego_should_update_freq(struct ego_policy *egp, u64 time)
 	 * the minimum value between up/down rate limit to cover all cases.
 	 * The exact rate limit will be considered in ego_postpone_freq_update().
 	 */
-	rate_limit_ns = min(egp->up_rate_limit_ns, egp->down_rate_limit_ns);
+	rate_limit_ns = egp->up_rate_limit_ns < egp->down_rate_limit_ns ? 
+                egp->up_rate_limit_ns : egp->down_rate_limit_ns;
 
 	return delta_ns >= rate_limit_ns;
 }
@@ -1140,44 +1141,55 @@ struct cpufreq_governor energy_aware_gov;
 
 static int ego_kthread_create(struct ego_policy *egp)
 {
-	struct task_struct *thread;
-	struct sched_param param = { .sched_priority = MAX_USER_RT_PRIO / 2 };
-	struct cpufreq_policy *policy = egp->policy;
-	int ret;
+        struct task_struct *thread;
+        struct sched_param param = { .sched_priority = MAX_USER_RT_PRIO / 2 };
+        struct cpufreq_policy *policy = egp->policy;
+       int ret;
 
-	/* kthread only required for slow path */
-	if (policy->fast_switch_enabled)
-		return 0;
+          /* kthread only required for slow path */
+       if (policy->fast_switch_enabled)
+          return 0;
 
-	kthread_init_work(&egp->work, ego_work);
-	kthread_init_worker(&egp->worker);
-	thread = kthread_create(kthread_worker_fn, &egp->worker,
-				"ego:%d", cpumask_first(policy->related_cpus));
-	if (IS_ERR(thread)) {
-		pr_err("failed to create ego thread: %ld\n", PTR_ERR(thread));
-		return PTR_ERR(thread);
-	}
+             kthread_init_work(&egp->work, ego_work);
+             kthread_init_worker(&egp->worker);
+             thread = kthread_create(kthread_worker_fn, &egp->worker,
+                    "ego:%d", cpumask_first(policy->related_cpus));
+               
+       if (IS_ERR(thread)) {
+          ret = PTR_ERR(thread);
+          pr_err("failed to create ego thread for CPU%d: %d\n",
+                 cpumask_first(policy->related_cpus), ret);
+          return ret;
+    }
 
-	ret = sched_setscheduler_nocheck(thread, SCHED_FIFO, &param);
-	if (ret) {
-		kthread_stop(thread);
-		pr_warn("%s: failed to set SCHED_FIFO\n", __func__);
-		return ret;
-	}
+      ret = sched_setscheduler_nocheck(thread, SCHED_FIFO, &param);
+    if (ret) {
+          kthread_stop(thread);
+          pr_warn("%s: failed to set SCHED_FIFO for %s (err=%d)\n",
+                  __func__, thread->comm, ret);
+          return ret;
+    }
 
-	set_cpus_allowed_ptr(thread, &egp->thread_allowed_cpus);
-	thread->flags |= PF_NO_SETAFFINITY;
-	egp->thread = thread;
-	init_irq_work(&egp->irq_work, ego_irq_work);
-	mutex_init(&egp->work_lock);
+    /* Restrict thread affinity and prevent changes */
+    ret = set_cpus_allowed_ptr(thread, &egp->thread_allowed_cpus);
+    if (ret) {
+          kthread_stop(thread);
+          pr_warn("%s: failed to set allowed CPUs for %s (err=%d)\n",
+                  __func__, thread->comm, ret);
+          return ret;
+    }
+      thread->flags |= PF_NO_SETAFFINITY;
 
-	pr_info("%s: cpus=%#x, allowed-cpu=%#x\n", __func__,
-			*(unsigned int *)cpumask_bits(&egp->cpus),
-			*(unsigned int *)cpumask_bits(&egp->thread_allowed_cpus));
+      egp->thread = thread;
+      init_irq_work(&egp->irq_work, ego_irq_work);
+      mutex_init(&egp->work_lock);
 
-	return 0;
+      pr_info("%s: cpus=%*pbl, allowed-cpus=%*pbl\n", __func__,
+              cpumask_pr_args(&egp->cpus),
+              cpumask_pr_args(&egp->thread_allowed_cpus));
+
+        return 0;
 }
-
 static int ego_init(struct cpufreq_policy *policy)
 {
 	struct ego_policy *egp = NULL;
@@ -1315,13 +1327,6 @@ struct cpufreq_governor energy_aware_gov = {
 	.stop			= ego_stop,
 	.limits			= ego_limits,
 };
-
-#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_ENERGYAWARE
-struct cpufreq_governor *cpufreq_default_governor(void)
-{
-	return &energy_aware_gov;
-}
-#endif
 
 static int ego_register(struct kobject *ems_kobj)
 {
