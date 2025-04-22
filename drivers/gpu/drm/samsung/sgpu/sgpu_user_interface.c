@@ -620,90 +620,6 @@ static ssize_t time_in_state_show(struct device *dev,
 }
 static DEVICE_ATTR_RO(time_in_state);
 
-static ssize_t local_minlock_util_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
-	struct sgpu_governor_data *data = df->data;
-	ssize_t count;
-
-	count = scnprintf(buf, PAGE_SIZE, "%u\n", data->local_minlock_util);
-
-	return count;
-}
-
-static ssize_t local_minlock_util_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct devfreq *df = to_devfreq(dev);
-	struct sgpu_governor_data *data = df->data;
-	uint32_t value;
-	int ret;
-
-	ret = kstrtou32(buf, 0, &value);
-	if (ret)
-		return -EINVAL;
-
-	mutex_lock(&data->lock);
-	data->local_minlock_util = value;
-	mutex_unlock(&data->lock);
-
-	ret = count;
-	return ret;
-
-}
-static DEVICE_ATTR_RW(local_minlock_util);
-
-static ssize_t local_minlock_temp_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
-	struct sgpu_governor_data *data = df->data;
-	ssize_t count;
-
-	count = scnprintf(buf, PAGE_SIZE, "%u\n", data->local_minlock_temp);
-
-	return count;
-
-}
-
-static ssize_t local_minlock_temp_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
-	struct devfreq *df = to_devfreq(dev);
-	struct sgpu_governor_data *data = df->data;
-	uint32_t value;
-	int ret;
-
-	ret = kstrtou32(buf, 0, &value);
-	if (ret)
-		return -EINVAL;
-
-	mutex_lock(&data->lock);
-	data->local_minlock_temp = value;
-	mutex_unlock(&data->lock);
-
-	ret = count;
-	return ret;
-
-}
-static DEVICE_ATTR_RW(local_minlock_temp);
-
-static ssize_t local_minlock_status_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct devfreq *df = to_devfreq(dev);
-	struct sgpu_governor_data *data = df->data;
-	ssize_t count;
-
-	count = scnprintf(buf, PAGE_SIZE, "%u\n", data->local_minlock_status);
-
-	return count;
-}
-static DEVICE_ATTR_RO(local_minlock_status);
-
 static ssize_t total_kernel_pages_show(struct device *dev,
 				    struct device_attribute *attr, char *buf)
 {
@@ -849,7 +765,6 @@ static struct attribute *sgpu_devfreq_sysfs_entries[] = {
 	&dev_attr_job_queue_count.attr,
 	&dev_attr_time_in_state.attr,
 	&dev_attr_total_kernel_pages.attr,
-	&dev_attr_local_minlock_status.attr,
 	/* show and set */
 	&dev_attr_highspeed.attr,
 	&dev_attr_utilization_source.attr,
@@ -863,8 +778,6 @@ static struct attribute *sgpu_devfreq_sysfs_entries[] = {
 	&dev_attr_downstay_times.attr,
 	&dev_attr_power_ratio.attr,
 	&dev_attr_compute_weight.attr,
-	&dev_attr_local_minlock_util.attr,
-	&dev_attr_local_minlock_temp.attr,
 	NULL,
 };
 
@@ -886,8 +799,6 @@ static struct attribute_group sgpu_profiler_attr_group = {
 	.attrs = sgpu_profiler_sysfs_entries,
 };
 #endif /* CONFIG_EXYNOS_GPU_PROFILER */
-
-
 
 int sgpu_create_sysfs_file(struct devfreq *df)
 {

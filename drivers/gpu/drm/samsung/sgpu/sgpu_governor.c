@@ -14,7 +14,6 @@
 
 #ifdef CONFIG_DRM_SGPU_EXYNOS
 #include <soc/samsung/cal-if.h>
-#include <linux/notifier.h>
 #include "exynos_gpu_interface.h"
 
 #include "sgpu_profiler_v1.h"
@@ -593,39 +592,6 @@ static struct sgpu_governor_info governor_info[SGPU_MAX_GOVERNOR_NUM] = {
 #endif
 };
 
-#if IS_ENABLED(CONFIG_GPU_THERMAL)
-static bool sgpu_governor_local_minlock_change(struct devfreq *df, uint32_t *level)
-{
-	struct sgpu_governor_data *data = df->data;
-	struct utilization_data *udata = df->last_status.private_data;
-	unsigned long orig_target = df->profile->freq_table[*level];
-	int cur_temp = 0;
-	bool ret = false;
-
-	if (df->profile->freq_table[*level] >=
-	    df->profile->freq_table[data->local_minlock_level]) {
-		return ret;
-	}
-
-	/* GPU TZID=3 */
-	cur_temp = exynos_tmu_extern_get_temp(data->tmu_id);
-
-	if (cur_temp >= data->local_minlock_temp &&
-	    udata->last_util >= data->local_minlock_util) {
-		*level = data->local_minlock_level;
-		ret = true;
-
-		if (!data->local_minlock_status) {
-			DRM_INFO("%s: orig_target=%lu, min_target=%lu",
-				 __func__, orig_target,
-				 df->profile->freq_table[*level]);
-		}
-	}
-
-	return ret;
-}
-#endif /* CONFIG_GPU_THERMAL */
-
 static int devfreq_sgpu_func(struct devfreq *df, unsigned long *freq)
 {
 	int err = 0;
@@ -679,14 +645,6 @@ static int devfreq_sgpu_func(struct devfreq *df, unsigned long *freq)
 		data->expire_jiffies = jiffies +
 			msecs_to_jiffies(data->downstay_times[level]);
 	}
-
-#if IS_ENABLED(CONFIG_GPU_THERMAL)
-	if (data->local_minlock_temp > 0)
-		data->local_minlock_status =
-			sgpu_governor_local_minlock_change(df, &level);
-	else
-		data->local_minlock_status = false;
-#endif /* CONFIG_GPU_THERMAL */
 
 	*freq = df->profile->freq_table[level];
 
@@ -857,17 +815,16 @@ int sgpu_governor_change(struct devfreq *df, char *str_governor)
 #define DEFAULT_GOVERNOR			SGPU_DVFS_GOVERNOR_CONSERVATIVE
 #define DEFAULT_POLLING_MS			32
 #define DEFAULT_VALID_TIME			32
-#define DEFAULT_INITIAL_FREQ			26000
+#define DEFAULT_INITIAL_FREQ			1306000
 #define DEFAULT_HIGHSPEED_FREQ			500000
 #define DEFAULT_HIGHSPEED_LOAD			99
 #define DEFAULT_HIGHSPEED_DELAY			0
-#define DEFAULT_POWER_RATIO			50
-#define DEFAULT_CL_BOOST_FREQ			1210000
+#define DEFAULT_POWER_RATIO			100
+#define DEFAULT_CL_BOOST_FREQ			1306000
 #define DEFAULT_LOCAL_MINLOCK_FREQ		404000
 #define DEFAULT_LOCAL_MINLOCK_UTIL		0
-#define DEFAULT_LOCAL_MINLOCK_TEMP		65
 #define DEFAULT_FINE_GRAINED_LOW_FREQ		0
-#define DEFAULT_FINE_GRAINED_HIGH_FREQ		1210000
+#define DEFAULT_FINE_GRAINED_HIGH_FREQ		1306000
 #define DEFAULT_FINE_GRAINED_STEP_UNIT		1
 #define DEFAULT_MINLOCK_LIMIT_FREQ		1306000
 
@@ -936,18 +893,6 @@ int sgpu_governor_init(struct device *dev, struct devfreq_dev_profile *dp,
 	mutex_init(&data->lock);
 
 #ifdef CONFIG_DRM_SGPU_EXYNOS
-#if IS_ENABLED(CONFIG_GPU_THERMAL)
-	gpu_tmu = of_parse_phandle(adev->pldev->dev.of_node, "gpu_tmu", 0);
-	ret = of_property_read_u32(gpu_tmu, "id", &gpu_tmuid);
-	if (ret)
-		data->tmu_id = -1;
-	else
-		data->tmu_id = gpu_tmuid;
-
-	data->local_minlock_util = DEFAULT_LOCAL_MINLOCK_UTIL;
-	data->local_minlock_temp = DEFAULT_LOCAL_MINLOCK_TEMP;
-	data->local_minlock_status = false;
-#endif /* CONFIG_GPU_THERMAL */
 
 	cal_get_dvfs_lv_num = cal_dfs_get_lv_num(adev->cal_id);
 	dp->max_state = cal_get_dvfs_lv_num;
