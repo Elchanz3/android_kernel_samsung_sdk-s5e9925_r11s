@@ -132,8 +132,7 @@ struct cmucal_pll_table pll_dsu_rate_table[] = {
 };
 
 struct cmucal_pll_table pll_g3d_rate_table[] = {
-	PLL_RATE_MPS(1402000000, 73, 4, 0),
-	PLL_RATE_MPS(1306000000, 68, 4, 0),
+	PLL_RATE_MPS(1418000000, 74, 4, 0),
 	PLL_RATE_MPS(1210000000, 63, 4, 0),
 	PLL_RATE_MPS(1095000000, 57, 4, 0),
 	PLL_RATE_MPS(999000000, 52, 4, 0),

@@ -5208,7 +5208,7 @@
 		flags = <0x1e>;
 		g3d_cmu_cal_id = <0xb04000d>;
 		min_freq = <404000>;
-		max_freq = <0x13ed90>;
+		max_freq = <0x15a160>;
 		samsung,imgloader-s2mpu-support;
 		dma-coherent;
 		power-domains = <0x9a>;
