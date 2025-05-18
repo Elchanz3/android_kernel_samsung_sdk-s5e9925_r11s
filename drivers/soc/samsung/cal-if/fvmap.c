@@ -360,18 +360,6 @@ int fvmap_get_freq_volt_table(unsigned int id, void *freq_volt_table, unsigned i
 }
 EXPORT_SYMBOL_GPL(fvmap_get_freq_volt_table);
 
-static struct attribute *freq_volt_table_attrs[] = {
-    &freq_volt_table_attr.attr,
-    NULL,
-};
-
-static const struct attribute_group freq_volt_table_group = {
-    .attrs = freq_volt_table_attrs,
-};
-
-
-
-
 int fvmap_get_voltage_table(unsigned int id, unsigned int *table)
 {
 	struct fvmap_header *fvmap_header = fvmap_base;
@@ -515,39 +503,6 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 	}
 }
 
-static ssize_t show_freq_volt_table(struct kobject *kobj, struct kobj_attribute *attr, char *buf)
-{
-    struct fvmap_header *fvmap_header = fvmap_base;
-    struct rate_volt_header *fv_table;
-    int idx = GET_IDX(G3D);
-    int i;
-    ssize_t count = 0;
-    
-    if (!fvmap_base)
-        return -EINVAL;
-    
-    fv_table = fvmap_base + fvmap_header[idx].o_ratevolt;
-    
-    count += snprintf(buf + count, PAGE_SIZE - count, 
-                     "GPU Frequency-Voltage Table:\n");
-    count += snprintf(buf + count, PAGE_SIZE - count, 
-                     "=========================\n");
-    count += snprintf(buf + count, PAGE_SIZE - count, 
-                     "Freq (kHz)    Voltage (uV)\n");
-    
-    for (i = 0; i < fvmap_header[idx].num_of_lv; i++) {
-        count += snprintf(buf + count, PAGE_SIZE - count, 
-                         "%8d      %8d\n", 
-                         fv_table->table[i].rate, 
-                         fv_table->table[i].volt * STEP_UV);
-    }
-    
-    return count;
-}
-
-static struct kobj_attribute freq_volt_table_attr =
-__ATTR(table, 0444, show_freq_volt_table, NULL);
-
 int fvmap_init(void __iomem *sram_base)
 {
 	void __iomem *map_base;
@@ -575,14 +530,6 @@ int fvmap_init(void __iomem *sram_base)
 
 	if (sysfs_create_group(kobj, &asv_g_spec_grp))
 		pr_err("Fail to create asv_g_spec group\n");
-		
-	kobj = kobject_create_and_add("freq_volt_table", kernel_kobj);
-        if (!kobj)
-                pr_err("Fail to create freq_volt_table kboject\n");
-                
-        if (sysfs_create_group(kobj, &freq_volt_table_group))
-                pr_err("Fail to create freq_volt_table group\n");
-	
 
 	return 0;
 }
