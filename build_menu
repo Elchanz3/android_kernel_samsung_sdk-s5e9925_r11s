@@ -3,14 +3,10 @@
 set -e  # Exit on error
 
 # Variables
-export MENU_VERSION="S23FE_builder_RAM_v2"
-export DIR="$(readlink -f .)" # Original source directory on disk
-export OUT_DIR="$DIR/out"   # Original output directory on disk
+export MENU_VERSION="S23FE_builder"
+export DIR="$(readlink -f .)"
+export OUT_DIR="$DIR/out"
 export PARENT_DIR="$(readlink -f "$DIR/..")"
-
-# RAM Disk variable - will be set by setup_ramdisk
-export RAM_BUILD_DIR=""
-# RAM_OUT_DIR is removed as build happens in-place
 
 export CROSS_COMPILE="$PARENT_DIR/clang-r416183b/bin/aarch64-linux-gnu-"
 export CC="$PARENT_DIR/clang-r416183b/bin/clang"
@@ -32,112 +28,16 @@ BOLD_GREEN=$(tput bold; tput setaf 2)
 UNDERLINE=$(tput smul)
 RESET=$(tput sgr0)
 
-# --- RAM Disk Functions ---
-
-# Function to display pause message
+# Functions
 pause() {
   read -rp "${BOLD_RED}$2${RESET}Press ${BOLD_BLUE}[Enter]${RESET} to $1..."
 }
-
-# Function to clean up RAM disk
-cleanup_ram() {
-  if [ -n "$RAM_BUILD_DIR" ] && [ -d "$RAM_BUILD_DIR" ]; then
-    echo "${BOLD_GREEN}***** Cleaning up RAM disk ($RAM_BUILD_DIR) *****${RESET}"
-    # Change back to original directory in case we are inside RAM_BUILD_DIR
-    cd "$DIR"
-    rm -rf "$RAM_BUILD_DIR"
-    RAM_BUILD_DIR=""
-    echo "${BOLD_GREEN}***** RAM disk cleaned *****${RESET}"
-  fi
-}
-
-# Trap to ensure cleanup on exit or interrupt
-trap cleanup_ram EXIT SIGINT SIGTERM
-
-# Function to check available RAM in /dev/shm
-check_ram() {
-  local required_kb
-  local available_kb
-
-  echo "Calculating required space for source directory..."
-  required_kb=$(du -sk "$DIR" | cut -f1)
-  # Add a 30% buffer for build artifacts when building in-place
-  required_kb=$((required_kb * 13 / 10))
-
-  echo "Checking available RAM in /dev/shm..."
-  available_kb=$(df -k /dev/shm | awk 'NR==2 {print $4}')
-
-  echo "Required space (approx.): $((required_kb / 1024)) MB"
-  echo "Available space in /dev/shm: $((available_kb / 1024)) MB"
-
-  if [ "$available_kb" -lt "$required_kb" ]; then
-    echo "${BOLD_RED}Error: Not enough RAM available in /dev/shm.${RESET}"
-    echo "Required: ~${required_kb} KB, Available: ${available_kb} KB"
-    pause "confirm and exit operation" "Insufficient RAM. "
-    cleanup_ram # Clean up if directory was partially created
-    return 1 # Indicate failure
-  fi
-  return 0 # Indicate success
-}
-
-# Function to set up RAM disk and copy source
-setup_ramdisk_and_copy() {
-  # Clean up any previous RAM disk first
-  cleanup_ram
-
-  echo "${BOLD_GREEN}***** Setting up RAM disk *****${RESET}"
-  # Create temporary directory in /dev/shm
-  RAM_BUILD_DIR=$(mktemp -d -p /dev/shm build_temp.XXXXXX)
-  if [ ! -d "$RAM_BUILD_DIR" ]; then
-      echo "${BOLD_RED}Error: Failed to create RAM disk directory in /dev/shm.${RESET}"
-      pause "return to main menu" "RAM disk creation failed. "
-      return 1
-  fi
-  # No separate RAM_OUT_DIR needed
-  echo "RAM disk created at: $RAM_BUILD_DIR"
-
-  # Check RAM availability
-  if ! check_ram; then
-    # Error message and cleanup are handled within check_ram
-    return 1
-  fi
-
-  echo "${BOLD_GREEN}***** Copying source to RAM disk ($RAM_BUILD_DIR) *****${RESET}"
-  echo "Source: $DIR"
-  echo "Destination: $RAM_BUILD_DIR"
-  # Use cp -a to preserve permissions, ownership, and links
-  if cp -a "$DIR/." "$RAM_BUILD_DIR/"; then
-    echo "${BOLD_GREEN}***** Source copied successfully *****${RESET}"
-    return 0 # Success
-  else
-    echo "${BOLD_RED}Error: Failed to copy source to RAM disk.${RESET}"
-    pause "confirm and exit operation" "Copy failed. "
-    cleanup_ram
-    return 1 # Failure
-  fi
-}
-
-# Function to copy build results from RAM to disk
-copy_results_from_ram() {
-    echo "${BOLD_GREEN}***** Copying results from RAM disk ($RAM_BUILD_DIR) to $OUT_DIR *****${RESET}"
-    mkdir -p "$OUT_DIR" # Ensure original OUT_DIR exists
-
-    # Copy main kernel images from RAM source tree
-    find "$RAM_BUILD_DIR/arch/arm64/boot/" -maxdepth 1 -name 'Image*' -exec cp {} "$OUT_DIR/" \;
-    # Copy dtb and dtbo from RAM source tree (assuming mkdtimg outputs them there)
-    find "$RAM_BUILD_DIR/" -maxdepth 1 \( -name 'dtb.img' -o -name 'dtbo.img' \) -exec cp {} "$OUT_DIR/" \;
-
-    echo "${BOLD_GREEN}***** Results copied *****${RESET}"
-}
-
-# --- Original Functions Modified for RAM Disk (In-Place Build) ---
 
 check_and_clone() {
   local repo_url="$1"
   local dest_dir="$2"
   local description="$3"
 
-  # Dependency cloning still happens on the persistent disk
   if [ ! -d "$dest_dir" ]; then
     pause "clone $description"
     git clone "$repo_url" "$dest_dir"
@@ -146,270 +46,97 @@ check_and_clone() {
 
 variant() {
   local configs
-  # Check for configs in the original source directory
-  configs=($(ls "$DIR/arch/arm64/configs/exynos2200_r11s_defconfig"* 2>/dev/null))
+  configs=($(ls arch/arm64/configs/exynos2200_r11s_defconfig* 2>/dev/null))
 
   if [ ${#configs[@]} -eq 0 ]; then
-    pause "return to main menu" "No variants found in $DIR/arch/arm64/configs! "
-    return 1 # Indicate failure to select variant
+    pause "return to main menu" "No variants found! "
+    return
   fi
 
   echo ""
   echo "${BOLD_BLUE}Variant Selection:${RESET}"
   for i in "${!configs[@]}"; do
-    # Extract variant name from the original path for display
     echo " $((i + 1)). $(basename "${configs[i]}" | cut -d'_' -f2)"
   done
 
   local choice
   read -rp "Enter choice [1 - ${#configs[@]}]: " choice
   if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice > 0 && choice <= ${#configs[@]} )); then
-    # Set VARIANT based on the selection from the original path
     VARIANT="$(basename "${configs[choice - 1]}" | cut -d'_' -f2)"
     echo "Variant ${VARIANT} selected"
     pause "continue"
-    return 0 # Indicate success
   else
     pause "return to main menu" "Invalid option, "
-    return 1 # Indicate failure
   fi
 }
 
 clean() {
-  echo "${BOLD_GREEN}***** Cleaning directories on disk *****${RESET}"
-  # Clean original source and out directories
-  cd "$DIR"
-  # Run make clean/mrproper in the original source tree
-  make clean && make mrproper || echo "Make clean/mrproper failed in $DIR, continuing..."
+  echo "${BOLD_GREEN}***** Cleaning directories *****${RESET}"
+  make clean && make mrproper
   rm -rf "$OUT_DIR"
-  # Also clean RAM disk if it exists
-  cleanup_ram
   echo "${BOLD_GREEN}***** Cleaning complete *****${RESET}"
   pause "continue"
 }
 
 build_kernel() {
-  # Select variant first (uses original $DIR)
-  if ! variant; then return; fi
+  variant
+  echo "${BOLD_GREEN}***** Compiling kernel *****${RESET}"
+  mkdir -p "$OUT_DIR"
 
-  # Setup RAM disk and copy source
-  if ! setup_ramdisk_and_copy; then return; fi
+  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV "exynos2200_${VARIANT}_defconfig" dtbs
+  make -j12 -C "$(pwd)" $KERNEL_MAKE_ENV
 
-  echo "${BOLD_GREEN}***** Compiling kernel in RAM ($RAM_BUILD_DIR) *****${RESET}"
-  # Navigate into the RAM disk source directory
-  cd "$RAM_BUILD_DIR"
+  # Generate dtbo and dtb
+  ./toolchain/mkdtimg cfg_create out/dtbo.img dtconfigs/r11s.cfg -d arch/arm64/boot/dts/samsung/r11s
+  ./toolchain/mkdtimg cfg_create out/dtb.img dtconfigs/exynos2200.cfg -d arch/arm64/boot/dts/exynos
 
-  # Make commands run inside RAM_BUILD_DIR, outputting in-place (no O=...)
-  make -j12 $KERNEL_MAKE_ENV "exynos2200_${VARIANT}_defconfig"
-  make -j12 $KERNEL_MAKE_ENV dtbs
-  make -j12 $KERNEL_MAKE_ENV
-
-  echo "${BOLD_GREEN}***** Generating DTB/DTBO in RAM ($RAM_BUILD_DIR) *****${RESET}"
-  # Tools are expected in the source tree, now in RAM
-  # Output dtb/dtbo directly into RAM_BUILD_DIR
-  # Assuming mkdtimg uses paths relative to current dir ($RAM_BUILD_DIR)
-  # Adjust dts paths to be relative to RAM_BUILD_DIR
-  ./toolchain/mkdtimg cfg_create "$RAM_BUILD_DIR/dtbo.img" dtconfigs/r11s.cfg -d arch/arm64/boot/dts/samsung/r11s
-  ./toolchain/mkdtimg cfg_create "$RAM_BUILD_DIR/dtb.img" dtconfigs/exynos2200.cfg -d arch/arm64/boot/dts/exynos
-
-  # Check for build success within RAM disk source tree
-  local kernel_image_path="$RAM_BUILD_DIR/arch/arm64/boot/Image"
-  if [ -e "$kernel_image_path.gz" ]; then
-      kernel_image_path="$kernel_image_path.gz"
+  if [ -e "$DIR/arch/arm64/boot/Image.gz" ]; then
+    cp "$DIR/arch/arm64/boot/Image.gz" "$OUT_DIR/Image.gz"
   fi
 
-  if [ -e "$kernel_image_path" ] && [ -e "$RAM_BUILD_DIR/dtb.img" ] && [ -e "$RAM_BUILD_DIR/dtbo.img" ]; then
-    echo "${BOLD_GREEN}***** Kernel compiled successfully in RAM *****${RESET}"
-    # Copy results back to original disk location
-    copy_results_from_ram
-    echo "${BOLD_GREEN}***** Ready to flash! (Files in $OUT_DIR) *****${RESET}"
+  if [ -e "$DIR/arch/arm64/boot/Image" ]; then
+    cp "$DIR/arch/arm64/boot/Image" "$OUT_DIR/Image"
+    echo "${BOLD_GREEN}***** Ready to flash! *****${RESET}"
     pause "continue"
   else
-    echo "${BOLD_RED}Kernel build failed in RAM! Check logs in $RAM_BUILD_DIR ${RESET}"
-    # Results are not copied, RAM disk will be cleaned by trap
-    pause "return to main menu" "Build failed. "
+    pause "return to main menu" "Kernel build failed!"
   fi
-
-  # Change back to original directory and cleanup RAM
-  cd "$DIR"
-  cleanup_ram
 }
 
 anykernel3() {
-  # Select variant first (uses original $DIR)
-  if ! variant; then return; fi
-
-  # Setup RAM disk and copy source (including AnyKernel3 subdir)
-  if ! setup_ramdisk_and_copy; then return; fi
-
-  # Navigate into the RAM disk source directory
-  cd "$RAM_BUILD_DIR"
-
-  # Define expected paths for build products within the RAM source tree
-  local kernel_image_path_ram="$RAM_BUILD_DIR/arch/arm64/boot/Image"
-  local dtbo_path_ram="$RAM_BUILD_DIR/dtbo.img"
-  local dtb_path_ram="$RAM_BUILD_DIR/dtb.img"
-
-  # Check if kernel was built (in RAM disk's source tree)
-  # If kernel wasn't built in RAM in *this* session, try copying from original OUT_DIR
-  if [ ! -e "$kernel_image_path_ram" ] && [ ! -e "$kernel_image_path_ram.gz" ]; then
-      echo "Kernel Image not found in RAM source tree ($RAM_BUILD_DIR/arch/arm64/boot/)."
-      echo "Attempting to copy from original OUT_DIR ($OUT_DIR)..."
-      if [ -e "$OUT_DIR/Image" ]; then cp "$OUT_DIR/Image" "$kernel_image_path_ram";
-      elif [ -e "$OUT_DIR/Image.gz" ]; then cp "$OUT_DIR/Image.gz" "$kernel_image_path_ram.gz";
-      else
-          echo "${BOLD_RED}Error: Kernel Image not found in RAM or original OUT_DIR.${RESET}"
-          pause "return to main menu" "Build the kernel first! "
-          cd "$DIR"
-          cleanup_ram
-          return
-      fi
-      echo "Successfully copied Kernel Image from $OUT_DIR to RAM."
-  fi
-
-  if [ ! -e "$dtbo_path_ram" ]; then
-      echo "dtbo.img not found in RAM source tree ($RAM_BUILD_DIR)."
-      echo "Attempting to copy from original OUT_DIR ($OUT_DIR)..."
-      if [ -e "$OUT_DIR/dtbo.img" ]; then cp "$OUT_DIR/dtbo.img" "$dtbo_path_ram";
-      else
-          echo "${BOLD_RED}Error: dtbo.img not found in RAM or original OUT_DIR.${RESET}"
-          pause "return to main menu" "Build the kernel first! "
-          cd "$DIR"
-          cleanup_ram
-          return
-      fi
-      echo "Successfully copied dtbo.img from $OUT_DIR to RAM."
-  fi
-
-  if [ ! -e "$dtb_path_ram" ]; then
-      echo "dtb.img not found in RAM source tree ($RAM_BUILD_DIR)."
-      echo "Attempting to copy from original OUT_DIR ($OUT_DIR)..."
-      if [ -e "$OUT_DIR/dtb.img" ]; then cp "$OUT_DIR/dtb.img" "$dtb_path_ram";
-      else
-          echo "${BOLD_RED}Error: dtb.img not found in RAM or original OUT_DIR.${RESET}"
-          pause "return to main menu" "Build the kernel first! "
-          cd "$DIR"
-          cleanup_ram
-          return
-      fi
-      echo "Successfully copied dtb.img from $OUT_DIR to RAM."
-  fi
-
-  # Select the correct kernel image (prefer non-gz if both exist? Original script logic)
-  local final_kernel_image_ram="$kernel_image_path_ram"
-  if [ -e "$kernel_image_path_ram.gz" ]; then
-      final_kernel_image_ram="$kernel_image_path_ram.gz"
-  fi
-
-  echo "${BOLD_GREEN}***** Creating flashable ZIP in RAM ($RAM_BUILD_DIR/AnyKernel3) *****${RESET}"
-  cd AnyKernel3 || { echo "${BOLD_RED}Error: AnyKernel3 directory not found in RAM disk!${RESET}"; cd "$DIR"; cleanup_ram; return; }
-
-  # Copy build products from RAM source tree to RAM AnyKernel3 dir
-  cp "$final_kernel_image_ram" Image # AnyKernel3 expects 'Image' or 'Image.gz'
-  cp "$dtbo_path_ram" dtbo
-  cp "$dtb_path_ram" dtb
-
-  # Determine kernel release from RAM disk source
-  local kernel_release
-  kernel_release=$(cat "$RAM_BUILD_DIR/include/config/kernel.release" 2>/dev/null || echo "unknown")
-  local zip_filename="${VARIANT}_kernel_${kernel_release}_$(date '+%Y_%m_%d').zip"
-
-  echo "Creating ZIP: $zip_filename"
-  # Zip contents of current directory (AnyKernel3 in RAM)
-  zip -r9 "$zip_filename" ./* -x .git README.md '*placeholder'
-
-  echo "${BOLD_GREEN}***** ZIP created successfully in RAM *****${RESET}"
-
-  # Copy the zip file back to the original $DIR
-  echo "Copying $zip_filename to $DIR ..."
-  # Use mv to move the zip out of the RAM disk AnyKernel3 folder
-  if mv "$zip_filename" "$DIR/"; then
-      echo "${BOLD_GREEN}***** Flashable ZIP available at $DIR/$zip_filename *****${RESET}"
+  variant
+  if [ -e "$DIR/arch/arm64/boot/Image" ]; then
+    cd AnyKernel3 || exit
+    cp "$DIR/arch/arm64/boot/Image" Image
+    cp "$DIR/out/dtbo.img" dtbo
+    cp "$DIR/out/dtb.img" dtb
+    zip -r9 "${VARIANT}_kernel_$(cat "$DIR/include/config/kernel.release")_$(date '+%Y_%m_%d').zip" * -x .git README.md *placeholder
+    cd "$DIR" || exit
+    pause "continue"
   else
-      echo "${BOLD_RED}Error: Failed to move ZIP file from RAM to $DIR.${RESET}"
+    pause "return to main menu" "Build the kernel first! "
   fi
-
-  # Go back to original DIR before cleanup
-  cd "$DIR"
-  cleanup_ram
-  pause "continue"
 }
 
 build_vendor_boot() {
-  # Setup RAM disk and copy source (including magiskboot subdir and potentially Images dir)
-  if ! setup_ramdisk_and_copy; then return; fi
-
-  # Navigate into the RAM disk source directory
-  cd "$RAM_BUILD_DIR"
-
-  # Check for original vendor_boot.img on disk
-  local original_vendor_boot="$DIR/Images/vendor_boot.img"
-  if [ ! -e "$original_vendor_boot" ]; then
-      echo "${BOLD_RED}Error: $original_vendor_boot not found!${RESET}"
-      pause "return to main menu" "Original vendor_boot image missing. "
-      cd "$DIR"
-      cleanup_ram
-      return
-  fi
-
-  # Check for dtb.img (needed for repack) in RAM source tree
-  local dtb_path_ram="$RAM_BUILD_DIR/dtb.img"
-  # If not built in RAM this session, copy from original OUT_DIR
-  if [ ! -e "$dtb_path_ram" ]; then
-      echo "dtb.img not found in RAM source tree ($RAM_BUILD_DIR)."
-      echo "Attempting to copy from original OUT_DIR ($OUT_DIR)..."
-      if [ -e "$OUT_DIR/dtb.img" ]; then
-          cp "$OUT_DIR/dtb.img" "$dtb_path_ram"
-      else
-          echo "${BOLD_RED}Error: dtb.img not found in RAM or original OUT_DIR ($OUT_DIR).${RESET}"
-          pause "return to main menu" "Build the kernel first to generate dtb.img! "
-          cd "$DIR"
-          cleanup_ram
-          return
-      fi
-      echo "Successfully copied dtb.img from $OUT_DIR to RAM."
-  fi
-
-  echo "${BOLD_GREEN}***** Generating vendor_boot image in RAM ($RAM_BUILD_DIR/magiskboot) *****${RESET}"
-  cd magiskboot || { echo "${BOLD_RED}Error: magiskboot directory not found in RAM disk!${RESET}"; cd "$DIR"; cleanup_ram; return; }
-
-  # Copy original vendor_boot.img from disk to RAM magiskboot dir
-  cp "$original_vendor_boot" vendor_boot.img
-
-  echo "Unpacking vendor_boot.img in RAM..."
-  ./magiskboot unpack vendor_boot.img
-
-  echo "Replacing dtb in RAM..."
-  rm -rf dtb # Remove existing dtb directory from unpacked image
-  cp "$dtb_path_ram" dtb # Copy the newly built dtb.img from RAM source tree
-
-  echo "Repacking vendor_boot.img in RAM..."
-  ./magiskboot repack vendor_boot.img # Creates new-boot.img in current dir (magiskboot in RAM)
-
-  # Copy the new vendor_boot image back to the original $OUT_DIR
-  local new_vendor_boot_ram="./new-boot.img"
-  local final_vendor_boot_disk="$OUT_DIR/vendor_boot.img"
-  echo "Copying $new_vendor_boot_ram to $final_vendor_boot_disk ..."
-  mkdir -p "$OUT_DIR" # Ensure $OUT_DIR exists
-  # Use mv to move the image out of the RAM disk magiskboot folder
-  if mv "$new_vendor_boot_ram" "$final_vendor_boot_disk"; then
-      echo "${BOLD_GREEN}***** vendor_boot.img generated successfully at $final_vendor_boot_disk *****${RESET}"
+  if [ -e "$DIR/Images/vendor_boot.img" ]; then
+    cd "$DIR/magiskboot" || exit
+    cp "$DIR/Images/vendor_boot.img" vendor_boot.img
+    ./magiskboot unpack vendor_boot.img
+    rm -rf dtb
+    cp "$DIR/out/dtb.img" dtb
+    ./magiskboot repack vendor_boot.img
+    mv "$DIR/magiskboot/new-boot.img" "$OUT_DIR/vendor_boot.img"
+    echo "vendor_boot done!"
+    ./magiskboot cleanup
+    cd "$DIR" || exit
+    read -p "Press enter to continue..."
   else
-      echo "${BOLD_RED}Error: Failed to move new vendor_boot image from RAM to $OUT_DIR.${RESET}"
+    read -p "Error!" "vendor_boot image not found! Press enter to continue..."
   fi
-
-  echo "Cleaning up magiskboot directory in RAM..."
-  ./magiskboot cleanup
-
-  # Go back to original DIR before cleanup
-  cd "$DIR"
-  cleanup_ram
-  pause "continue"
 }
 
-# --- Main Script Logic ---
-
-# Run dependency checks (on persistent disk)
+# Run dependency checks
 check_and_clone "https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r416183b" "$PARENT_DIR/clang-r416183b" "Android Clang/LLVM"
 check_and_clone "https://android.googlesource.com/platform/prebuilts/gas/linux-x86" "$PARENT_DIR/gas/linux-x86" "GNU assembler"
 check_and_clone "https://android.googlesource.com/platform/prebuilts/build-tools" "$PARENT_DIR/build-tools" "Build tools"
@@ -417,17 +144,17 @@ check_and_clone "https://android.googlesource.com/platform/prebuilts/build-tools
 # Menu
 show_menus() {
   clear
-  echo "${BOLD_BLUE} Weibo Build Menu $MENU_VERSION (Compiles in RAM - In-Place)${RESET}"
-  echo " 1. ${UNDERLINE}Build${RESET} Kernel (in RAM)"
-  echo " 2. ${UNDERLINE}Clean${RESET} directories (Disk & RAM)"
-  echo " 3. Create ${UNDERLINE}Flashable ZIP${RESET} (in RAM)"
-  echo " 4. Generate ${UNDERLINE}Vendor_boot image${RESET} (in RAM)"
+  echo "${BOLD_BLUE} Weibo Build Menu $MENU_VERSION${RESET}"
+  echo " 1. ${UNDERLINE}Build${RESET} Kernel"
+  echo " 2. ${UNDERLINE}Clean${RESET} directories"
+  echo " 3. Create ${UNDERLINE}Flashable ZIP${RESET}"
+   echo " 4. Generate ${UNDERLINE}Vendor_boot image${RESET}"
   echo " 5. ${UNDERLINE}Exit${RESET}"
 }
 
 read_options() {
   local choice
-  read -rp "Enter choice [1-5]: " choice
+  read -rp "Enter choice [1-4]: " choice
   case $choice in
     1) build_kernel ;;
     2) clean ;;
@@ -438,7 +165,6 @@ read_options() {
   esac
 }
 
-# Main loop
 while true; do
   show_menus
   read_options
