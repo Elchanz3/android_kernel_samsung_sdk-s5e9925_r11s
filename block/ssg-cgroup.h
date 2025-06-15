@@ -11,13 +11,13 @@
     __atomic_add_fetch(&((v)->counter), (i), __ATOMIC_RELAXED)
 
 struct ssg_blkcg {
-        struct blkcg_policy_data cpd __aligned(64); // Sintaxe corrigida
+        struct blkcg_policy_data cpd __aligned(64);
         int max_available_ratio;
 };
 
 struct ssg_blkg {
-        struct blkg_policy_data pd __aligned(64); // Sintaxe corrigida
-        atomic_t current_rqs;
+        struct blkg_policy_data pd __aligned(64);
+        atomic_t current_rqs __aligned(64);
         int max_available_rqs;
         unsigned int shallow_depth;
 };
